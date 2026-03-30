@@ -1,9 +1,9 @@
 import {
-	sendHeartbeat,
-	sendHeartbeatNative,
+	AuthError,
 	findStreamKey,
 	RateLimitError,
-	AuthError,
+	sendHeartbeat,
+	sendHeartbeatNative,
 } from "../api";
 import type { Quest, QuestTaskType } from "../types";
 

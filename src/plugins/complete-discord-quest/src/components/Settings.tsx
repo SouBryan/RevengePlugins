@@ -1,11 +1,10 @@
 import { React } from "@vendetta/metro/common";
 import { useProxy } from "@vendetta/storage";
-import { General, Forms, Button } from "@vendetta/ui/components";
+import { Button, Forms, General } from "@vendetta/ui/components";
 import { showToast } from "@vendetta/ui/toasts";
-import { semanticColors } from "@vendetta/ui";
 
-import { vstorage } from "../settings";
 import { startFarming, stopFarming } from "../questManager";
+import { vstorage } from "../settings";
 import { getActiveTasks } from "../tasks";
 
 const { Text, View } = General;

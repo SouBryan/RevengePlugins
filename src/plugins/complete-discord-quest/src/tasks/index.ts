@@ -1,6 +1,6 @@
-import type { Quest, QuestTaskType, ActiveTask } from "../types";
-import { startVideoTask } from "./videoTask";
+import type { ActiveTask, Quest, QuestTaskType } from "../types";
 import { startHeartbeatTask } from "./heartbeatTask";
+import { startVideoTask } from "./videoTask";
 
 const activeTasks = new Map<string, ActiveTask>();
 
@@ -54,7 +54,9 @@ export function startTask(quest: Quest, onComplete?: () => void): boolean {
 		cleanup,
 	});
 
-	console.log(`[CompleteDiscordQuest] Started ${task.type} for: ${questName} (target: ${task.target}s)`);
+	console.log(
+		`[CompleteDiscordQuest] Started ${task.type} for: ${questName} (target: ${task.target}s)`,
+	);
 	return true;
 }
 

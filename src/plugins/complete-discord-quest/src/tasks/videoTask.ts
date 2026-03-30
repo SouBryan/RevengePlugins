@@ -1,4 +1,4 @@
-import { sendVideoProgress, RateLimitError, AuthError } from "../api";
+import { AuthError, RateLimitError, sendVideoProgress } from "../api";
 import type { Quest, QuestTaskType } from "../types";
 
 function getProgress(quest: Quest, taskType: QuestTaskType): number {

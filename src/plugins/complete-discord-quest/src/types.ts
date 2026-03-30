@@ -110,7 +110,7 @@ export type QuestTaskType =
 	| "STREAM_ON_DESKTOP"
 	| "PLAY_ACTIVITY";
 
-export const enum QuestRewardType {
+export enum QuestRewardType {
 	CODE = 1,
 	IN_GAME = 2,
 	COLLECTIBLE = 3,

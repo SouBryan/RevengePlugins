@@ -1,4 +1,4 @@
-import { TokenModule, RestAPI, ChannelStore } from "./stores";
+import { ChannelStore, RestAPI, TokenModule } from "./stores";
 import type { Quest } from "./types";
 
 const API_BASE = "https://discord.com/api/v9";

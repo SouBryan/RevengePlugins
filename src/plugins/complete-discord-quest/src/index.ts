@@ -1,9 +1,6 @@
-import { storage } from "@vendetta/plugin";
-import { showToast } from "@vendetta/ui/toasts";
-
 import Settings from "./components/Settings";
-import { vstorage, initDefaults } from "./settings";
 import { startFarming, stopFarming } from "./questManager";
+import { initDefaults, vstorage } from "./settings";
 import { FluxDispatcher } from "./stores";
 
 let fluxUnsubs: (() => void)[] = [];

@@ -12,9 +12,8 @@ export const ChannelStore = findByStoreName("ChannelStore");
 export const GuildChannelStore = findByStoreName("GuildChannelStore");
 
 // Discord internal REST module — fallback signatures for different Discord versions
-export const RestAPI =
-	findByProps("getAPIBaseURL") ??
-	findByProps("get", "post", "put", "del");
+export const RestAPI = findByProps("getAPIBaseURL")
+	?? findByProps("get", "post", "put", "del");
 
 // Token access for spoofed desktop requests
 export const TokenModule = findByProps("getToken");

@@ -1,10 +1,10 @@
 import { showToast } from "@vendetta/ui/toasts";
 
-import { getQuests, enrollQuest } from "./api";
+import { enrollQuest, getQuests } from "./api";
 import { vstorage } from "./settings";
 import { QuestsStore } from "./stores";
-import { startTask, stopAllTasks, isTaskActive, getMainTask } from "./tasks";
-import type { Quest, QuestRewardType, QuestTaskType } from "./types";
+import { getMainTask, isTaskActive, startTask, stopAllTasks } from "./tasks";
+import type { Quest, QuestTaskType } from "./types";
 
 function isQuestExpired(quest: Quest): boolean {
 	const expires = quest.config?.expires_at;
@@ -37,12 +37,11 @@ function isTaskTypeEnabled(taskType: QuestTaskType): boolean {
 }
 
 function matchesRewardFilter(quest: Quest): boolean {
-	const anyFilterActive =
-		vstorage.filterRewardCodes ||
-		vstorage.filterInGame ||
-		vstorage.filterCollectibles ||
-		vstorage.filterVirtualCurrency ||
-		vstorage.filterFractionalPremium;
+	const anyFilterActive = vstorage.filterRewardCodes
+		|| vstorage.filterInGame
+		|| vstorage.filterCollectibles
+		|| vstorage.filterVirtualCurrency
+		|| vstorage.filterFractionalPremium;
 
 	// If no reward filters active, allow all
 	if (!anyFilterActive) return true;
@@ -52,12 +51,18 @@ function matchesRewardFilter(quest: Quest): boolean {
 
 	return rewards.some((r) => {
 		switch (r.type) {
-			case 1: return vstorage.filterRewardCodes;
-			case 2: return vstorage.filterInGame;
-			case 3: return vstorage.filterCollectibles;
-			case 4: return vstorage.filterVirtualCurrency;
-			case 5: return vstorage.filterFractionalPremium;
-			default: return false;
+			case 1:
+				return vstorage.filterRewardCodes;
+			case 2:
+				return vstorage.filterInGame;
+			case 3:
+				return vstorage.filterCollectibles;
+			case 4:
+				return vstorage.filterVirtualCurrency;
+			case 5:
+				return vstorage.filterFractionalPremium;
+			default:
+				return false;
 		}
 	});
 }
