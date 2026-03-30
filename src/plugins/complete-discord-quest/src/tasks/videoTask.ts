@@ -1,4 +1,4 @@
-import { sendVideoProgress, RateLimitError } from "../api";
+import { sendVideoProgress, RateLimitError, AuthError } from "../api";
 import type { Quest, QuestTaskType } from "../types";
 
 function getProgress(quest: Quest, taskType: QuestTaskType): number {
@@ -43,6 +43,11 @@ export function startVideoTask(
 			} catch (e) {
 				if (e instanceof RateLimitError) {
 					timeoutId = setTimeout(tick, e.retryAfter * 1000);
+					return;
+				}
+				if (e instanceof AuthError) {
+					console.error(`[CompleteDiscordQuest] Auth failed, stopping video task`);
+					cancelled = true;
 					return;
 				}
 				console.error(`[CompleteDiscordQuest] Video progress error for ${quest.id}:`, e);

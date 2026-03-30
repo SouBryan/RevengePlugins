@@ -1,7 +1,9 @@
 import { readdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
-import modIcons from "plugins/themes-plus/src/stuff/modIcons";
 import { readFileString } from "../../fs";
+
+// modIcons was from themes-plus plugin (removed)
+const modIcons: Record<string, { source: string }> = {};
 
 function replaceHook(str: string, hook: string, replacement: string) {
 	const [prefix, rest] = str.split(`<!-- ${hook} start -->`);

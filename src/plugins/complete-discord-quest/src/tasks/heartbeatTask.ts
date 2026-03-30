@@ -3,6 +3,7 @@ import {
 	sendHeartbeatNative,
 	findStreamKey,
 	RateLimitError,
+	AuthError,
 } from "../api";
 import type { Quest, QuestTaskType } from "../types";
 
@@ -55,6 +56,11 @@ export function startHeartbeatTask(
 		} catch (e) {
 			if (e instanceof RateLimitError) {
 				timeoutId = setTimeout(beat, e.retryAfter * 1000);
+				return;
+			}
+			if (e instanceof AuthError) {
+				console.error(`[CompleteDiscordQuest] Auth failed, stopping heartbeat task`);
+				cancelled = true;
 				return;
 			}
 			console.error(`[CompleteDiscordQuest] Heartbeat error for ${quest.id}:`, e);

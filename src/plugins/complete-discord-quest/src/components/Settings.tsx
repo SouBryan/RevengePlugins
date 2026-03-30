@@ -1,16 +1,78 @@
 import { React } from "@vendetta/metro/common";
 import { useProxy } from "@vendetta/storage";
-import { Forms } from "@vendetta/ui/components";
+import { General, Forms, Button } from "@vendetta/ui/components";
+import { showToast } from "@vendetta/ui/toasts";
+import { semanticColors } from "@vendetta/ui";
 
 import { vstorage } from "../settings";
+import { startFarming, stopFarming } from "../questManager";
+import { getActiveTasks } from "../tasks";
 
+const { Text, View } = General;
 const { FormSection, FormRow, FormSwitchRow } = Forms;
+
+function ActiveTasksStatus() {
+	const [tasks, setTasks] = React.useState(getActiveTasks());
+
+	React.useEffect(() => {
+		const interval = setInterval(() => setTasks(getActiveTasks()), 2000);
+		return () => clearInterval(interval);
+	}, []);
+
+	if (tasks.length === 0) {
+		return (
+			<FormSection title="Status">
+				<FormRow label="No active quests" subLabel="Tap Start Farming to begin" />
+			</FormSection>
+		);
+	}
+
+	return (
+		<FormSection title={`Active Quests (${tasks.length})`}>
+			{tasks.map((t) => (
+				<FormRow
+					key={t.questId}
+					label={t.questName}
+					subLabel={t.taskType}
+				/>
+			))}
+		</FormSection>
+	);
+}
 
 export default function Settings() {
 	useProxy(vstorage);
+	const [farming, setFarming] = React.useState(getActiveTasks().length > 0);
 
 	return (
 		<>
+			<ActiveTasksStatus />
+
+			<FormSection title="Controls">
+				<View style={{ flexDirection: "row", padding: 12, gap: 8 }}>
+					<Button
+						text="Start Farming"
+						color={farming ? "grey" : "brand"}
+						size="small"
+						onPress={() => {
+							startFarming();
+							setFarming(true);
+							showToast("Farming started");
+						}}
+					/>
+					<Button
+						text="Stop Farming"
+						color={farming ? "red" : "grey"}
+						size="small"
+						onPress={() => {
+							stopFarming();
+							setFarming(false);
+							showToast("Farming stopped");
+						}}
+					/>
+				</View>
+			</FormSection>
+
 			<FormSection title="Automation">
 				<FormSwitchRow
 					label="Auto-accept quests"

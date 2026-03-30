@@ -86,6 +86,9 @@ export async function sendHeartbeat(
 			const retryAfter = data?.retry_after ?? 60;
 			throw new RateLimitError(retryAfter);
 		}
+		if (resp.status === 401 || resp.status === 403) {
+			throw new AuthError();
+		}
 		throw new Error(`HTTP ${resp.status}: ${JSON.stringify(data)}`);
 	}
 
@@ -128,5 +131,11 @@ export class RateLimitError extends Error {
 	constructor(retryAfter: number) {
 		super(`Rate limited, retry after ${retryAfter}s`);
 		this.retryAfter = retryAfter;
+	}
+}
+
+export class AuthError extends Error {
+	constructor() {
+		super("Authentication failed (401/403)");
 	}
 }

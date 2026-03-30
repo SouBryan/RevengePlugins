@@ -1,8 +1,0 @@
-{
-	"status": "broken",
-	"usable": true,
-	"reason": {
-		"cause": "Broken due to",
-		"reason": "Emoji replacement broken by React Native function components"
-	}
-}
