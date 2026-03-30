@@ -35,72 +35,26 @@
 
 ## 📊 Stats
 
-- I've coded a total of **19** plugins
-- I finished **11** plugins, and I'm working on **1** plugin
-- **3** of my plugins are discontinued and **4** of my plugins are broken right now.
+- I've coded a total of **1** plugin
+- I finished **0** plugins, and I'm working on **1** plugin
+- **0** of my plugins are discontinued and **0** of my plugins are broken right now.
 
 <div align="center">
-<img alt="Stats Pie Chart" src="https://quickchart.io/chart?c=%7B%22type%22%3A%22doughnut%22%2C%22data%22%3A%7B%22labels%22%3A%5B%22Finished%22%2C%22Broken%22%2C%22Unfinished%22%2C%22Discontinued%22%5D%2C%22datasets%22%3A%5B%7B%22data%22%3A%5B11%2C1%2C4%2C3%5D%2C%22backgroundColor%22%3A%5B%22%23a6da95%22%2C%22%23ed8796%22%2C%22%23f5a97f%22%2C%22%23b8c0e0%22%5D%2C%22datalabels%22%3A%7B%22labels%22%3A%7B%22index%22%3A%7B%22color%22%3A%22%23fff%22%2C%22font%22%3A%7B%22size%22%3A18%7D%2C%22align%22%3A%22end%22%2C%22anchor%22%3A%22end%22%2C%22formatter%22%3A(_%2Cctx)%3D%3Ectx.chart.data.labels%5Bctx.dataIndex%5D%7D%2C%22name%22%3A%7B%22color%22%3A%22%23222%22%2C%22backgroundColor%22%3A%22%23fff%22%2C%22borderRadius%22%3A4%2C%22offset%22%3A0%2C%22padding%22%3A2%2C%22font%22%3A%7B%22size%22%3A16%7D%2C%22align%22%3A%22top%22%2C%22formatter%22%3Aval%3D%3E%60%24%7BMath.floor(val%2F19*100)%7D%25%60%7D%2C%22value%22%3A%7B%22color%22%3A%22%23fff%22%2C%22font%22%3A%7B%22size%22%3A16%7D%2C%22padding%22%3A0%2C%22align%22%3A%22bottom%22%7D%7D%7D%7D%5D%7D%2C%22options%22%3A%7B%22legend%22%3A%7B%22display%22%3Afalse%7D%2C%22layout%22%3A%7B%22padding%22%3A%7B%22top%22%3A30%2C%22bottom%22%3A30%7D%7D%2C%22plugins%22%3A%7B%22datalabels%22%3A%7B%22display%22%3Atrue%7D%2C%22doughnutlabel%22%3A%7B%22color%22%3A%22%23FFF%22%2C%22labels%22%3A%5B%7B%22text%22%3A19%2C%22font%22%3A%7B%22size%22%3A20%2C%22weight%22%3A%22bold%22%7D%7D%2C%7B%22text%22%3A%22plugins%22%7D%5D%7D%7D%7D%7D" width="600" />
+<img alt="Stats Pie Chart" src="https://quickchart.io/chart?c=%7B%22type%22%3A%22doughnut%22%2C%22data%22%3A%7B%22labels%22%3A%5B%22Unfinished%22%5D%2C%22datasets%22%3A%5B%7B%22data%22%3A%5B1%5D%2C%22backgroundColor%22%3A%5B%22%23f5a97f%22%5D%2C%22datalabels%22%3A%7B%22labels%22%3A%7B%22index%22%3A%7B%22color%22%3A%22%23fff%22%2C%22font%22%3A%7B%22size%22%3A18%7D%2C%22align%22%3A%22end%22%2C%22anchor%22%3A%22end%22%2C%22formatter%22%3A(_%2Cctx)%3D%3Ectx.chart.data.labels%5Bctx.dataIndex%5D%7D%2C%22name%22%3A%7B%22color%22%3A%22%23222%22%2C%22backgroundColor%22%3A%22%23fff%22%2C%22borderRadius%22%3A4%2C%22offset%22%3A0%2C%22padding%22%3A2%2C%22font%22%3A%7B%22size%22%3A16%7D%2C%22align%22%3A%22top%22%2C%22formatter%22%3Aval%3D%3E%60%24%7BMath.floor(val%2F1*100)%7D%25%60%7D%2C%22value%22%3A%7B%22color%22%3A%22%23fff%22%2C%22font%22%3A%7B%22size%22%3A16%7D%2C%22padding%22%3A0%2C%22align%22%3A%22bottom%22%7D%7D%7D%7D%5D%7D%2C%22options%22%3A%7B%22legend%22%3A%7B%22display%22%3Afalse%7D%2C%22layout%22%3A%7B%22padding%22%3A%7B%22top%22%3A30%2C%22bottom%22%3A30%7D%7D%2C%22plugins%22%3A%7B%22datalabels%22%3A%7B%22display%22%3Atrue%7D%2C%22doughnutlabel%22%3A%7B%22color%22%3A%22%23FFF%22%2C%22labels%22%3A%5B%7B%22text%22%3A1%2C%22font%22%3A%7B%22size%22%3A20%2C%22weight%22%3A%22bold%22%7D%7D%2C%7B%22text%22%3A%22plugins%22%7D%5D%7D%7D%7D%7D" width="600" />
 </div>
 
 ## 📃 Plugin List
 
 ### ✅ Finished
 
-- Char Counter — Adds a character counter above the chat input
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/char-counter) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/char-counter/)
-- Clean URLs — Removes tracking garbage from links sent and received
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/clean-urls) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/clean-urls/)
-- Cloud Sync — Syncs your plugins, themes and fonts to the cloud
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/cloud-sync) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/cloud-sync/) [<img alt="view_backend_code" src="https://img.shields.io/badge/view_backend_code-494d64?style=for-the-badge" />](https://github.com/nexpid/CloudSync)
-- Kazum Kiryu Facecam — Have Kazum Kiryu accompany you while you type. Don't worry, he doesn't bite!
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/kiryu-facecam) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/kiryu-facecam/)
-- Message Preview — Adds a button to preview your message before sending it
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/message-preview) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/message-preview/)
-- NexxUtils — Nexx's utility plugins
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/nexxutils) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/nexxutils/)
-- Plugin Browser — Browse all proxied plugins
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/plugin-browser) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/plugin-browser/)
-- Plugin Embeds — Shows an embed with plugin info when a plugin link is sent in chat
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/plugin-embeds) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/plugin-embeds/)
-- Song Spotlight — Show off songs on your Discord profile!
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/song-spotlight) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/song-spotlight/) [<img alt="view_backend_code" src="https://img.shields.io/badge/view_backend_code-494d64?style=for-the-badge" />](https://github.com/nexpid-labs/SongSpotlight)
-- Use System Emoji — Replaces Twemoji with system emoji in messages
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/use-system-emoji) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/use-system-emoji/)
-- UserPFP — https://userpfp.github.io/UserPFP/#using-userpfp
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/userpfp) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/userpfp/)
-
 ### ❌ Broken
-
-- App Directory — Brings the app directory to mobile
-  - [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/app-directory/)
-- DOOM — Play DOOM inside of Discord by going to the Settings (powered by js-dos)
-  - **Broken due to:** js-dos misconfiguration
-  - [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/doom/)
-- Themes+ — Adds more customizability to Themes
-  - **Broken due to:** Iconpacks broken by React Native function components
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/themes-plus) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/themes-plus/)
-- Twemoji Everywhere — Turns all system emoji used on Discord into Twemoji! 👋😀🎉
-  - **Broken due to:** Emoji replacement broken by React Native function components
-  - [<img alt="copy_link" src="https://img.shields.io/badge/copy_link-1e2030?style=for-the-badge" />](https://revenge.nexpid.xyz/twemoji-everywhere) [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/twemoji-everywhere/)
 
 ### ⏳ Unfinished
 
-- Monet Theme — A material you theme generator
-  - **Note:** Theming is kinda wonky. Expect a refactor soon™
-  - [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/monet-theme/)
+- CompleteDiscordQuest — Automatically completes Discord quests (video, game, stream, activity) from your mobile device
+  - [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/complete-discord-quest/)
 
 ### 💀 Discontinued
-
-- CustomRPC — Displays a custom RPC activity on your profile! (idea from Vencord) (RECODED)
-  - **Discontinued due to:** CustomRPC is no longer maintained, use Rich Presence by siguma
-  - [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/customrpc/)
-- Local Pins — Adds a button to locally pin a message
-  - **Discontinued due to:** Superseeded by Discord's bookmarks feature (nitro only)
-  - [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/local-pins/)
-- Tenor Gif Fix — Download and share Tenor links as GIFs instead of MP4s (thanks to rosie <3)
-  - **Discontinued due to:** Replaced by the NexxUtils TenorGifFix module
-  - [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/tenor-gif-fix/)
 
 ## 📜 Licensing
 
