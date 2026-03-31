@@ -1,4 +1,4 @@
-import { ChannelStore, RestAPI, TokenModule } from "./stores";
+import { ChannelStore, FluxDispatcher, RestAPI, TokenModule } from "./stores";
 import type { Quest } from "./types";
 
 const API_BASE = "https://discord.com/api/v9";
@@ -35,7 +35,40 @@ function getSpoofHeaders(): Record<string, string> {
 	};
 }
 
-// ---- REST via native Discord module (mobile headers — fine for video/activity) ----
+// ---- Try to find Discord's internal quest enrollment action at runtime ----
+let _questEnrollAction: ((questId: string, action: any) => Promise<any>) | null = null;
+
+function findQuestEnrollAction(): typeof _questEnrollAction {
+	if (_questEnrollAction) return _questEnrollAction;
+	try {
+		// vendetta.metro.find takes a filter function and returns matching module
+		const vd = (window as any).vendetta;
+		if (vd?.metro?.find) {
+			const mod = vd.metro.find((m: any) => {
+				if (typeof m !== "function" && typeof m !== "object") return false;
+				// Look for modules that have quest-related methods
+				if (typeof m?.default === "function") {
+					try {
+						const src = m.default.toString();
+						if (src.includes("QUESTS_ENROLL") || src.includes("quests") && src.includes("enroll")) {
+							return true;
+						}
+					} catch {}
+				}
+				return false;
+			});
+			if (mod?.default && typeof mod.default === "function") {
+				_questEnrollAction = mod.default;
+				console.log("[CompleteDiscordQuest] Found internal quest enroll action");
+			}
+		}
+	} catch (e) {
+		console.log("[CompleteDiscordQuest] Could not find internal quest enroll action:", e);
+	}
+	return _questEnrollAction;
+}
+
+// ---- REST via native Discord module ----
 
 export async function getQuests(): Promise<{ quests: Quest[] }> {
 	const resp = await RestAPI.get({ url: "/quests/@me" });
@@ -43,7 +76,35 @@ export async function getQuests(): Promise<{ quests: Quest[] }> {
 }
 
 export async function enrollQuest(questId: string): Promise<any> {
-	// Strategy 1: RestAPI with desktop spoof headers
+	// Strategy 0: Try Discord's internal enrollment action (Flux-based)
+	const internalAction = findQuestEnrollAction();
+	if (internalAction) {
+		try {
+			const result = await internalAction(questId, {
+				questContent: 11,
+				questContentCTA: "ACCEPT_QUEST",
+				sourceQuestContent: 0,
+			});
+			console.log(`[CompleteDiscordQuest] Enrolled ${questId} via internal action`);
+			return result;
+		} catch (e: any) {
+			console.log(`[CompleteDiscordQuest] Internal enroll failed for ${questId}: ${e?.message ?? e}`);
+		}
+	}
+
+	// Strategy 1: RestAPI native (mobile-style, no header spoofing)
+	try {
+		const resp = await RestAPI.post({
+			url: `/quests/${questId}/enroll`,
+			body: { location: "11" },
+		});
+		console.log(`[CompleteDiscordQuest] Enrolled ${questId} via RestAPI native`);
+		return resp.body;
+	} catch (e: any) {
+		console.log(`[CompleteDiscordQuest] Enroll strategy 1 (RestAPI native) failed for ${questId}: ${e?.status ?? e?.httpStatus} ${e?.body?.message ?? e?.message ?? ""}`);
+	}
+
+	// Strategy 2: RestAPI with desktop spoof headers
 	try {
 		const resp = await RestAPI.post({
 			url: `/quests/${questId}/enroll`,
@@ -53,19 +114,7 @@ export async function enrollQuest(questId: string): Promise<any> {
 		console.log(`[CompleteDiscordQuest] Enrolled ${questId} via RestAPI+spoof`);
 		return resp.body;
 	} catch (e: any) {
-		console.log(`[CompleteDiscordQuest] Enroll strategy 1 failed for ${questId}: ${e?.status ?? e?.httpStatus} ${e?.body?.message ?? e?.message ?? ""}`);
-	}
-
-	// Strategy 2: RestAPI native (mobile headers)
-	try {
-		const resp = await RestAPI.post({
-			url: `/quests/${questId}/enroll`,
-			body: { location: "11" },
-		});
-		console.log(`[CompleteDiscordQuest] Enrolled ${questId} via RestAPI native`);
-		return resp.body;
-	} catch (e: any) {
-		console.log(`[CompleteDiscordQuest] Enroll strategy 2 failed for ${questId}: ${e?.status ?? e?.httpStatus} ${e?.body?.message ?? e?.message ?? ""}`);
+		console.log(`[CompleteDiscordQuest] Enroll strategy 2 (RestAPI+spoof) failed for ${questId}: ${e?.status ?? e?.httpStatus} ${e?.body?.message ?? e?.message ?? ""}`);
 	}
 
 	// Strategy 3: fetch with full desktop headers
@@ -90,13 +139,27 @@ export async function enrollQuest(questId: string): Promise<any> {
 			console.log(`[CompleteDiscordQuest] Enrolled ${questId} via fetch`);
 			return data;
 		}
-		console.log(`[CompleteDiscordQuest] Enroll strategy 3 failed for ${questId}: HTTP ${resp.status} ${JSON.stringify(data)}`);
-		throw new Error(`Enroll failed: HTTP ${resp.status}`);
+		console.log(`[CompleteDiscordQuest] Enroll strategy 3 (fetch) failed for ${questId}: HTTP ${resp.status} ${JSON.stringify(data)}`);
 	} catch (e: any) {
-		if (e?.message?.startsWith("Enroll failed")) throw e;
-		console.error(`[CompleteDiscordQuest] All enroll strategies failed for ${questId}:`, e);
-		throw e;
+		console.log(`[CompleteDiscordQuest] Enroll strategy 3 exception for ${questId}: ${e?.message ?? e}`);
 	}
+
+	// Strategy 4: Flux dispatch (trigger Discord's own enrollment handler)
+	try {
+		await FluxDispatcher.dispatch({
+			type: "QUESTS_SEND_ENROLL",
+			questId,
+			location: 11,
+		});
+		console.log(`[CompleteDiscordQuest] Dispatched QUESTS_SEND_ENROLL for ${questId}`);
+		// Wait a bit for the enrollment to be processed
+		await new Promise(r => setTimeout(r, 2000));
+		return {};
+	} catch (e: any) {
+		console.log(`[CompleteDiscordQuest] Flux dispatch failed for ${questId}: ${e?.message ?? e}`);
+	}
+
+	throw new Error("All enrollment strategies failed");
 }
 
 export async function sendVideoProgress(

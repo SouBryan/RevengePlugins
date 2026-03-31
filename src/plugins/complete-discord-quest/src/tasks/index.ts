@@ -1,11 +1,24 @@
-import type { ActiveTask, Quest, QuestTaskType } from "../types";
+import type { ActiveTask, QuestTaskType } from "../types";
 import { startHeartbeatTask } from "./heartbeatTask";
 import { startVideoTask } from "./videoTask";
 
 const activeTasks = new Map<string, ActiveTask>();
 
-function getMainTask(quest: Quest): { type: QuestTaskType; target: number } | null {
-	const tasks = quest.config?.task_config?.tasks;
+// Helper: access camelCase or snake_case property
+function prop(obj: any, ...keys: string[]): any {
+	if (!obj) return undefined;
+	for (const k of keys) {
+		if (obj[k] !== undefined) return obj[k];
+	}
+	return undefined;
+}
+
+function getMainTask(quest: any): { type: QuestTaskType; target: number } | null {
+	const cfg = quest?.config;
+	if (!cfg) return null;
+
+	const tc = prop(cfg, "taskConfig", "taskConfigV2", "task_config");
+	const tasks = tc?.tasks;
 	if (!tasks) return null;
 
 	const priority: QuestTaskType[] = [
@@ -25,13 +38,18 @@ function getMainTask(quest: Quest): { type: QuestTaskType; target: number } | nu
 	return null;
 }
 
-export function startTask(quest: Quest, onComplete?: () => void): boolean {
+function getQuestName(quest: any): string {
+	const msgs = quest?.config?.messages;
+	return prop(msgs, "questName", "quest_name") ?? quest?.id ?? "unknown";
+}
+
+export function startTask(quest: any, onComplete?: () => void): boolean {
 	if (activeTasks.has(quest.id)) return false;
 
 	const task = getMainTask(quest);
 	if (!task) return false;
 
-	const questName = quest.config?.messages?.quest_name ?? quest.id;
+	const questName = getQuestName(quest);
 
 	const activeTask: ActiveTask = {
 		questId: quest.id,

@@ -1,9 +1,9 @@
-import { React } from "@vendetta/metro/common";
+import { React, clipboard } from "@vendetta/metro/common";
 import { useProxy } from "@vendetta/storage";
 import { Button, Forms, General } from "@vendetta/ui/components";
 import { showToast } from "@vendetta/ui/toasts";
 
-import { startFarming, stopFarming } from "../questManager";
+import { debugDumpQuests, startFarming, stopFarming } from "../questManager";
 import { vstorage } from "../settings";
 import { getActiveTasks } from "../tasks";
 
@@ -91,6 +91,21 @@ export default function Settings() {
 							stopFarming();
 							setFarming(false);
 							showToast("Farming stopped");
+						}}
+					/>
+					<Button
+						text="Debug Dump"
+						color="grey"
+						size="small"
+						onPress={() => {
+							const dump = debugDumpQuests();
+							console.log("[CompleteDiscordQuest] Debug dump:\n" + dump);
+							try {
+								clipboard?.setString?.(dump);
+								showToast("Quest data copied to clipboard");
+							} catch {
+								showToast(dump.substring(0, 200));
+							}
 						}}
 					/>
 				</View>

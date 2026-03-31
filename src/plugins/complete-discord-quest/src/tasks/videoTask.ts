@@ -1,14 +1,15 @@
 import { AuthError, RateLimitError, sendVideoProgress } from "../api";
-import type { Quest, QuestTaskType } from "../types";
+import type { QuestTaskType } from "../types";
 import { updateTaskProgress } from "./index";
 
-function getProgress(quest: Quest, taskType: QuestTaskType): number {
-	const progress = quest.user_status?.progress?.[taskType];
+function getProgress(quest: any, taskType: QuestTaskType): number {
+	const us = quest?.userStatus ?? quest?.user_status;
+	const progress = us?.progress?.[taskType];
 	return progress?.value ?? 0;
 }
 
 export function startVideoTask(
-	quest: Quest,
+	quest: any,
 	taskType: QuestTaskType,
 	target: number,
 	onComplete: () => void,
@@ -17,8 +18,10 @@ export function startVideoTask(
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
 	let currentProgress = getProgress(quest, taskType);
 
-	const enrolledAt = quest.user_status?.enrolled_at
-		? new Date(quest.user_status.enrolled_at).getTime() / 1000
+	const us = quest?.userStatus ?? quest?.user_status;
+	const enrolledAtStr = us?.enrolledAt ?? us?.enrolled_at;
+	const enrolledAt = enrolledAtStr
+		? new Date(enrolledAtStr).getTime() / 1000
 		: Date.now() / 1000;
 
 	async function tick() {
@@ -38,7 +41,7 @@ export function startVideoTask(
 				updateTaskProgress(quest.id, currentProgress, "running");
 
 				const taskProgress = resp?.progress?.[taskType];
-				if (taskProgress?.completed_at || currentProgress >= target) {
+				if (taskProgress?.completed_at || taskProgress?.completedAt || currentProgress >= target) {
 					onComplete();
 					return;
 				}

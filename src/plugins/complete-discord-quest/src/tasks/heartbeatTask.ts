@@ -5,15 +5,18 @@ import {
 	sendHeartbeat,
 	sendHeartbeatNative,
 } from "../api";
-import type { Quest, QuestTaskType } from "../types";
+import type { QuestTaskType } from "../types";
 import { updateTaskProgress } from "./index";
 
 const HEARTBEAT_INTERVAL_MS = 25_000; // 25s between heartbeats
 
-function getProgress(quest: Quest, taskType: QuestTaskType): number {
-	const progress = quest.user_status?.progress?.[taskType];
+function getProgress(quest: any, taskType: QuestTaskType): number {
+	const us = quest?.userStatus ?? quest?.user_status;
+	if (!us) return 0;
+
+	const progress = us?.progress?.[taskType];
 	if (progress?.value != null) return progress.value;
-	return quest.user_status?.stream_progress_seconds ?? 0;
+	return us?.streamProgressSeconds ?? us?.stream_progress_seconds ?? 0;
 }
 
 function needsDesktopSpoof(taskType: QuestTaskType): boolean {
@@ -21,7 +24,7 @@ function needsDesktopSpoof(taskType: QuestTaskType): boolean {
 }
 
 export function startHeartbeatTask(
-	quest: Quest,
+	quest: any,
 	taskType: QuestTaskType,
 	target: number,
 	onComplete: () => void,
