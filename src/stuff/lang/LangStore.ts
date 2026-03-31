@@ -35,7 +35,7 @@ export const useLangStore = zustand.create<
 				}
 
 				const res = await fetch(
-					`${constants.github.raw}lang/values/${plugin.toString()}.json`,
+					`${constants.github.raw}lang/values/${String(plugin)}.json`,
 					{
 						headers: {
 							"if-modified-since": get().lastModified as any,

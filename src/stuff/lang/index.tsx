@@ -15,7 +15,7 @@ export class Lang<Plugin extends keyof LangValues> {
 
 	constructor(public plugin: Plugin) {
 		useLangStore.persist.setOptions({
-			name: `nexpid-lang-${plugin.toString()}`,
+			name: `nexpid-lang-${String(plugin)}`,
 			onRehydrateStorage: () => state => state?.update(this.plugin),
 		});
 		void useLangStore.persist.rehydrate();
