@@ -71,9 +71,10 @@ export function startHeartbeatTask(
 				return;
 			}
 			if (e instanceof AuthError) {
-				updateTaskProgress(quest.id, currentProgress, "error", "Auth failed (401/403)");
-				console.error(`[CompleteDiscordQuest] Auth failed, stopping heartbeat task`);
-				cancelled = true;
+				updateTaskProgress(quest.id, currentProgress, "error", e.message);
+				console.error(`[CompleteDiscordQuest] Auth error for ${quest.id}: ${e.message}`);
+				// Retry after 30s instead of giving up — might be transient
+				timeoutId = setTimeout(beat, 30_000);
 				return;
 			}
 			const errMsg = e instanceof Error ? e.message : String(e);
