@@ -186,6 +186,15 @@ export async function sendVideoProgress(
 	return resp.body;
 }
 
+export async function getPublicApplication(applicationId: string): Promise<any | null> {
+	const restAPI = getRestAPI();
+	if (!restAPI) throw new Error("Discord RestAPI module not found");
+	const resp = await restAPI.get({
+		url: `/applications/public?application_ids=${applicationId}`,
+	});
+	return resp?.body?.[0] ?? null;
+}
+
 // ---- REST via fetch with spoofed desktop headers (for game/stream quests) ----
 
 export async function sendHeartbeat(

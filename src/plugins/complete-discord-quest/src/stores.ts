@@ -14,6 +14,8 @@ let cachedQuestsStore: StoreLike | undefined;
 let cachedUserStore: StoreLike | undefined;
 let cachedChannelStore: StoreLike | undefined;
 let cachedGuildChannelStore: StoreLike | undefined;
+let cachedRunningGameStore: StoreLike | undefined;
+let cachedApplicationStreamingStore: StoreLike | undefined;
 let cachedRestAPI: any;
 let cachedTokenModule: any;
 
@@ -93,6 +95,24 @@ export function getGuildChannelStore(): StoreLike | undefined {
 	const resolved = resolveStore("GuildChannelStore");
 	if (resolved) cachedGuildChannelStore = resolved;
 	return resolved ?? cachedGuildChannelStore;
+}
+
+export function getRunningGameStore(): StoreLike | undefined {
+	const resolved = resolveStore(
+		"RunningGameStore",
+		(m: any) => typeof m?.getRunningGames === "function" && typeof m?.getGameForPID === "function",
+	);
+	if (resolved) cachedRunningGameStore = resolved;
+	return resolved ?? cachedRunningGameStore;
+}
+
+export function getApplicationStreamingStore(): StoreLike | undefined {
+	const resolved = resolveStore(
+		"ApplicationStreamingStore",
+		(m: any) => typeof m?.getStreamerActiveStreamMetadata === "function",
+	);
+	if (resolved) cachedApplicationStreamingStore = resolved;
+	return resolved ?? cachedApplicationStreamingStore;
 }
 
 export function getRestAPI(): any {
