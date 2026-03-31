@@ -30,7 +30,8 @@ function getSpoofHeaders(): Record<string, string> {
 		"User-Agent": DESKTOP_USER_AGENT,
 		"X-Super-Properties": buildSuperProperties(),
 		"X-Discord-Locale": "en-US",
-		"X-Discord-Timezone": Intl?.DateTimeFormat?.().resolvedOptions?.()?.timeZone ?? "America/Sao_Paulo",
+		"X-Discord-Timezone": Intl?.DateTimeFormat?.().resolvedOptions?.()?.timeZone
+			?? "America/Sao_Paulo",
 	};
 }
 
@@ -80,7 +81,11 @@ export async function sendHeartbeat(
 		return resp.body;
 	} catch (e: any) {
 		const status = e?.status ?? e?.httpStatus ?? e?.body?.code;
-		console.log(`[CompleteDiscordQuest] Strategy 1 (RestAPI+headers) failed: status=${status}, message=${e?.message ?? e?.body?.message ?? JSON.stringify(e)}`);
+		console.log(
+			`[CompleteDiscordQuest] Strategy 1 (RestAPI+headers) failed: status=${status}, message=${
+				e?.message ?? e?.body?.message ?? JSON.stringify(e)
+			}`,
+		);
 
 		// If it's rate limited, throw immediately
 		if (status === 429) {
@@ -94,7 +99,11 @@ export async function sendHeartbeat(
 		const token = TokenModule?.getToken?.();
 		if (!token) throw new Error("No token");
 
-		console.log(`[CompleteDiscordQuest] Trying strategy 2 (fetch), token starts with: ${token.substring(0, 10)}...`);
+		console.log(
+			`[CompleteDiscordQuest] Trying strategy 2 (fetch), token starts with: ${
+				token.substring(0, 10)
+			}...`,
+		);
 
 		const headers: Record<string, string> = {
 			...getSpoofHeaders(),
@@ -125,7 +134,11 @@ export async function sendHeartbeat(
 			return data;
 		}
 
-		console.log(`[CompleteDiscordQuest] Strategy 2 (fetch) failed: HTTP ${resp.status}, body=${JSON.stringify(data)}`);
+		console.log(
+			`[CompleteDiscordQuest] Strategy 2 (fetch) failed: HTTP ${resp.status}, body=${
+				JSON.stringify(data)
+			}`,
+		);
 
 		if (resp.status === 429) {
 			throw new RateLimitError(data?.retry_after ?? 60);
