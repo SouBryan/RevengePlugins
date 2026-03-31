@@ -20,7 +20,9 @@ function formatProgress(progress: number, target: number): string {
 function taskStatusLabel(t: ReturnType<typeof getActiveTasks>[0]): string {
 	const prog = formatProgress(t.progress, t.target);
 	if (t.status === "error") return `${t.taskType} — ERROR: ${t.lastError ?? "unknown"}`;
-	if (t.status === "rate-limited") return `${t.taskType} — ${prog} ⏳ ${t.lastError ?? "rate limited"}`;
+	if (t.status === "rate-limited") {
+		return `${t.taskType} — ${prog} ⏳ ${t.lastError ?? "rate limited"}`;
+	}
 	return `${t.taskType} — ${prog}`;
 }
 

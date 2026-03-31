@@ -45,7 +45,9 @@ export function startHeartbeatTask(
 			}
 
 			updateTaskProgress(quest.id, currentProgress, "running");
-			console.log(`[CompleteDiscordQuest] Heartbeat OK for ${quest.id}: ${currentProgress}/${target}s`);
+			console.log(
+				`[CompleteDiscordQuest] Heartbeat OK for ${quest.id}: ${currentProgress}/${target}s`,
+			);
 
 			if (currentProgress >= target) {
 				// Send terminal heartbeat
@@ -59,7 +61,12 @@ export function startHeartbeatTask(
 			}
 		} catch (e) {
 			if (e instanceof RateLimitError) {
-				updateTaskProgress(quest.id, currentProgress, "rate-limited", `Rate limited ${e.retryAfter}s`);
+				updateTaskProgress(
+					quest.id,
+					currentProgress,
+					"rate-limited",
+					`Rate limited ${e.retryAfter}s`,
+				);
 				timeoutId = setTimeout(beat, e.retryAfter * 1000);
 				return;
 			}

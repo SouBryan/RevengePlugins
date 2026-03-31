@@ -91,7 +91,12 @@ export function getActiveTasks(): ActiveTask[] {
 	return Array.from(activeTasks.values());
 }
 
-export function updateTaskProgress(questId: string, progress: number, status: "running" | "error" | "rate-limited", lastError?: string): void {
+export function updateTaskProgress(
+	questId: string,
+	progress: number,
+	status: "running" | "error" | "rate-limited",
+	lastError?: string,
+): void {
 	const task = activeTasks.get(questId);
 	if (task) {
 		task.progress = progress;

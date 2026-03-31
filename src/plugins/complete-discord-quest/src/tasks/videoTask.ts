@@ -44,7 +44,12 @@ export function startVideoTask(
 				}
 			} catch (e) {
 				if (e instanceof RateLimitError) {
-					updateTaskProgress(quest.id, currentProgress, "rate-limited", `Rate limited ${e.retryAfter}s`);
+					updateTaskProgress(
+						quest.id,
+						currentProgress,
+						"rate-limited",
+						`Rate limited ${e.retryAfter}s`,
+					);
 					timeoutId = setTimeout(tick, e.retryAfter * 1000);
 					return;
 				}
