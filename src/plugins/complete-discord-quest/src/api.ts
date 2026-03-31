@@ -10,25 +10,30 @@ import type { Quest } from "./types";
 const API_BASE = "https://discord.com/api/v9";
 
 const DESKTOP_USER_AGENT =
-	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9188 Chrome/130.0.6723.191 Electron/33.3.1 Safari/537.36";
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Discord/1.0.0 Chrome/120.0.0.0 Electron/28.0.0 Safari/537.36";
 
 function buildSuperProperties(): string {
 	const props = {
 		os: "Windows",
 		browser: "Discord Client",
 		release_channel: "stable",
-		client_version: "1.0.9188",
 		os_version: "10.0.22631",
 		os_arch: "x64",
 		app_arch: "x64",
 		system_locale: "en-US",
 		browser_user_agent: DESKTOP_USER_AGENT,
-		browser_version: "33.3.1",
-		client_build_number: 366934,
-		native_build_number: null,
+		browser_version: "28.0.0",
+		client_build_number: 512709,
 		client_event_source: null,
 	};
 	return btoa(JSON.stringify(props));
+}
+
+async function restGet(path: string): Promise<any> {
+	const restAPI = getRestAPI();
+	if (!restAPI) throw new Error("Discord RestAPI module not found");
+	const resp = await restAPI.get({ url: path });
+	return resp?.body;
 }
 
 function getSpoofHeaders(): Record<string, string> {
@@ -388,6 +393,37 @@ export async function findStreamKeyForQuest(questId: string): Promise<string> {
 	const fromStores = findStreamKey();
 	if (fromStores !== "call:0:1") {
 		return fromStores;
+	}
+
+	try {
+		const dms = await restGet("/users/@me/channels");
+		if (Array.isArray(dms) && dms.length > 0 && dms[0]?.id) {
+			return `call:${dms[0].id}:1`;
+		}
+	} catch (e) {
+		console.log("[CompleteDiscordQuest] Could not fetch DM channels via RestAPI for stream key:", e);
+	}
+
+	try {
+		const guilds = await restGet("/users/@me/guilds");
+		if (Array.isArray(guilds)) {
+			for (const guild of guilds) {
+				if (!guild?.id) continue;
+				try {
+					const channels = await restGet(`/guilds/${guild.id}/channels`);
+					const voiceChannel = Array.isArray(channels)
+						? channels.find((channel: any) => channel?.type === 2 && channel?.id)
+						: null;
+					if (voiceChannel?.id) {
+						return `call:${voiceChannel.id}:1`;
+					}
+				} catch {
+					// try next guild
+				}
+			}
+		}
+	} catch (e) {
+		console.log("[CompleteDiscordQuest] Could not fetch guild channels via RestAPI for stream key:", e);
 	}
 
 	try {
