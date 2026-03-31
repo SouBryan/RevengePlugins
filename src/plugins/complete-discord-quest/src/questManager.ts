@@ -2,7 +2,12 @@ import { showToast } from "@vendetta/ui/toasts";
 
 import { enrollQuest, getQuests } from "./api";
 import { vstorage } from "./settings";
-import { getQuestStoreDiagnostics, getQuestsStore } from "./stores";
+import {
+	describeQuestCandidate,
+	getQuestModuleCandidates,
+	getQuestStoreDiagnostics,
+	getQuestsStore,
+} from "./stores";
 import { getMainTask, isTaskActive, startTask, stopAllTasks } from "./tasks";
 import type { Quest, QuestTaskType } from "./types";
 
@@ -10,6 +15,7 @@ let cachedQuests: any[] = [];
 let cachedQuestSource = "none";
 let cachedQuestEventType = "none";
 let cachedQuestEventKeys = "none";
+let cachedQuestProbeSummary = "none";
 
 // ---- Helpers for camelCase/snake_case dual access on raw QuestsStore data ----
 function prop(obj: any, ...keys: string[]): any {
@@ -220,6 +226,35 @@ function fetchQuestsFromStore(): any[] {
 	return [];
 }
 
+function probeQuestModules(): any[] {
+	const candidates = getQuestModuleCandidates();
+	cachedQuestProbeSummary = candidates.length > 0
+		? candidates.slice(0, 8).map((candidate, index) => describeQuestCandidate(candidate, index)).join(" | ")
+		: "none";
+
+	for (const candidate of candidates) {
+		const sources = [
+			candidate?.quests,
+			candidate?.quest,
+			candidate?.data,
+			candidate?.payload,
+			candidate,
+		];
+
+		for (const source of sources) {
+			const extracted = extractQuestArray(source);
+			if (extracted.length > 0) {
+				cachedQuests = extracted;
+				cachedQuestSource = `module-probe:${typeof candidate?.getName === "function" ? candidate.getName() : "unnamed"}`;
+				console.log(`[CompleteDiscordQuest] Probed ${extracted.length} quest(s) from ${cachedQuestSource}`);
+				return extracted;
+			}
+		}
+	}
+
+	return [];
+}
+
 async function fetchQuests(): Promise<any[]> {
 	// QuestsStore has ALL quests (enrolled or not) from the Gateway
 	const storeQuests = fetchQuestsFromStore();
@@ -231,6 +266,11 @@ async function fetchQuests(): Promise<any[]> {
 	if (cachedQuests.length > 0) {
 		console.log(`[CompleteDiscordQuest] Got ${cachedQuests.length} quest(s) from ${cachedQuestSource}`);
 		return cachedQuests;
+	}
+
+	const probedQuests = probeQuestModules();
+	if (probedQuests.length > 0) {
+		return probedQuests;
 	}
 
 	// Fallback: REST API (only returns enrolled quests)
@@ -327,6 +367,7 @@ export function debugDumpQuests(): string {
 		return [
 			`Quests unavailable (type=${storeType}, raw keys=${raw ? Object.keys(raw).slice(0, 10).join(",") : "null"})`,
 			`store diagnostics: ${getQuestStoreDiagnostics()}`,
+			`module probe: ${cachedQuestProbeSummary}`,
 			`flux cache source: ${cachedQuestSource}`,
 			`last flux event: ${cachedQuestEventType}`,
 			`last flux keys: ${cachedQuestEventKeys}`,
@@ -336,6 +377,7 @@ export function debugDumpQuests(): string {
 	const lines: string[] = [
 		`Total: ${quests.length} quest(s) [store type=${storeType}]`,
 		`store diagnostics: ${getQuestStoreDiagnostics()}`,
+		`module probe: ${cachedQuestProbeSummary}`,
 		`flux cache source: ${cachedQuestSource}`,
 		`last flux event: ${cachedQuestEventType}`,
 		`last flux keys: ${cachedQuestEventKeys}`,

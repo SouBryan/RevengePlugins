@@ -17,6 +17,20 @@ let cachedGuildChannelStore: StoreLike | undefined;
 let cachedRestAPI: any;
 let cachedTokenModule: any;
 
+function nameLooksQuestRelated(name: string): boolean {
+	const normalized = name.toLowerCase();
+	return normalized.includes("quest") && !normalized.includes("request");
+}
+
+function hasQuestContainerShape(m: any): boolean {
+	if (!m || typeof m !== "object") return false;
+	return m.quests != null
+		|| typeof m.getQuest === "function"
+		|| typeof m.getQuestById === "function"
+		|| typeof m.getOptimisticProgress === "function"
+		|| typeof m.fetchQuest === "function";
+}
+
 function runtimeFind(filter: (m: any) => boolean): any {
 	try {
 		return (window as any)?.vendetta?.metro?.find?.(filter);
@@ -48,11 +62,13 @@ function isQuestStoreCandidate(m: any): boolean {
 	if (typeof m?.removeChangeListener !== "function") return false;
 
 	const name = typeof m?.getName === "function" ? m.getName() : "";
-	return /quest/i.test(name)
-		|| m.quests != null
-		|| typeof m.getQuest === "function"
-		|| typeof m.getQuestById === "function"
-		|| typeof m.getOptimisticProgress === "function";
+	return nameLooksQuestRelated(name) || hasQuestContainerShape(m);
+}
+
+function isQuestModuleCandidate(m: any): boolean {
+	if (!m || typeof m !== "object") return false;
+	const name = typeof m?.getName === "function" ? m.getName() : "";
+	return nameLooksQuestRelated(name) || hasQuestContainerShape(m);
 }
 
 export function getQuestsStore(): StoreLike | undefined {
@@ -94,22 +110,28 @@ export function getTokenModule(): any {
 
 export function getQuestStoreDiagnostics(): string {
 	const questStore = getQuestsStore();
+	const candidates = getQuestModuleCandidates()
+		.slice(0, 8)
+		.map((candidate, index) => describeQuestCandidate(candidate, index));
+
 	if (questStore) {
 		const name = typeof questStore.getName === "function" ? questStore.getName() : "unknown";
-		return `resolved=${name} keys=${Object.keys(questStore).slice(0, 20).join(",")}`;
+		return `resolved=${name} keys=${Object.keys(questStore).slice(0, 20).join(",")} candidates=${candidates.join(" | ") || "none"}`;
 	}
-
-	const candidates = runtimeFindAll(isQuestStoreCandidate)
-		.slice(0, 8)
-		.map((candidate: any, index: number) => {
-			const name = typeof candidate?.getName === "function"
-				? candidate.getName()
-				: `unnamed-${index + 1}`;
-			const keys = Object.keys(candidate ?? {}).slice(0, 12).join(",");
-			return `${name}[${keys}]`;
-		});
 
 	return candidates.length > 0
 		? `resolved=none candidates=${candidates.join(" | ")}`
 		: "resolved=none candidates=none";
+}
+
+export function getQuestModuleCandidates(): any[] {
+	return runtimeFindAll(isQuestModuleCandidate);
+}
+
+export function describeQuestCandidate(candidate: any, index = 0): string {
+	const name = typeof candidate?.getName === "function"
+		? candidate.getName()
+		: `unnamed-${index + 1}`;
+	const keys = Object.keys(candidate ?? {}).slice(0, 12).join(",");
+	return `${name}[${keys}]`;
 }
