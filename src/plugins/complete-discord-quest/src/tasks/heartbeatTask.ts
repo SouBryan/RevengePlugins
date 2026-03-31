@@ -1,6 +1,7 @@
 import {
 	AuthError,
 	findStreamKey,
+	findStreamKeyForQuest,
 	getPublicApplication,
 	RateLimitError,
 	sendHeartbeat,
@@ -246,7 +247,8 @@ function startDesktopPlayTask(
 
 			fallbackTimer = setTimeout(async () => {
 				if (cancelled || currentProgress > 0) return;
-				console.log(`[CompleteDiscordQuest] No internal heartbeat yet for ${applicationName}, trying game: stream key fallback`);
+				const streamKey = await findStreamKeyForQuest(quest.id);
+				console.log(`[CompleteDiscordQuest] No internal heartbeat yet for ${applicationName}, trying REST fallback with ${streamKey}`);
 				manualCleanup = await startManualHeartbeatLoop(
 					quest,
 					"PLAY_ON_DESKTOP",
@@ -255,7 +257,7 @@ function startDesktopPlayTask(
 						cleanup();
 						onComplete();
 					},
-					`game:${applicationId}`,
+					streamKey,
 				);
 			}, 20_000);
 		} catch (e) {
@@ -333,6 +335,7 @@ function startDesktopStreamTask(
 
 	fallbackTimer = setTimeout(async () => {
 		if (cancelled || currentProgress > 0) return;
+		const streamKey = await findStreamKeyForQuest(quest.id);
 		manualCleanup = await startManualHeartbeatLoop(
 			quest,
 			"STREAM_ON_DESKTOP",
@@ -341,7 +344,7 @@ function startDesktopStreamTask(
 				cleanup();
 				onComplete();
 			},
-			findStreamKey(),
+			streamKey,
 		);
 	}, 20_000);
 
@@ -368,9 +371,10 @@ export function startHeartbeatTask(
 		return startDesktopStreamTask(quest, target, onComplete);
 	}
 
-	const streamKey = findStreamKey();
 	let cleanup: (() => void) | null = null;
-	void startManualHeartbeatLoop(quest, taskType, target, onComplete, streamKey).then((fn) => {
+	void findStreamKeyForQuest(quest.id).then((streamKey) => {
+		return startManualHeartbeatLoop(quest, taskType, target, onComplete, streamKey);
+	}).then((fn) => {
 		cleanup = fn;
 	});
 	return () => cleanup?.();

@@ -1,6 +1,7 @@
 import {
 	FluxDispatcher,
 	getChannelStore,
+	getGuildChannelStore,
 	getRestAPI,
 	getTokenModule,
 } from "./stores";
@@ -38,6 +39,35 @@ function getSpoofHeaders(): Record<string, string> {
 		"X-Discord-Timezone": Intl?.DateTimeFormat?.().resolvedOptions?.()?.timeZone
 			?? "America/Sao_Paulo",
 	};
+}
+
+async function desktopFetch(path: string): Promise<any> {
+	const token = getTokenModule()?.getToken?.();
+	if (!token) throw new Error("No token");
+
+	const resp = await fetch(`${API_BASE}${path}`, {
+		method: "GET",
+		headers: {
+			...getSpoofHeaders(),
+			Authorization: token,
+			"Content-Type": "application/json",
+		},
+	});
+
+	if (resp.status === 204) return null;
+
+	let data: any = null;
+	try {
+		data = await resp.json();
+	} catch {
+		data = null;
+	}
+
+	if (!resp.ok) {
+		throw new Error(`GET ${path} failed: HTTP ${resp.status} ${JSON.stringify(data)}`);
+	}
+
+	return data;
 }
 
 // ---- Try to find Discord's internal quest enrollment action at runtime ----
@@ -318,8 +348,62 @@ export function findStreamKey(): string {
 		// ignore
 	}
 
+	try {
+		const guilds = getGuildChannelStore()?.getAllGuilds?.();
+		const guildValues = guilds ? Object.values(guilds) : [];
+		for (const guild of guildValues as any[]) {
+			const vocal = guild?.VOCAL;
+			if (Array.isArray(vocal) && vocal.length > 0) {
+				const channelId = vocal[0]?.channel?.id;
+				if (channelId) return `call:${channelId}:1`;
+			}
+		}
+	} catch {
+		// ignore
+	}
+
 	// Fallback: use a generic key
 	return "call:0:1";
+}
+
+export async function findStreamKeyForQuest(questId: string): Promise<string> {
+	const fromStores = findStreamKey();
+	if (fromStores !== "call:0:1") {
+		return fromStores;
+	}
+
+	try {
+		const dms = await desktopFetch("/users/@me/channels");
+		if (Array.isArray(dms) && dms.length > 0 && dms[0]?.id) {
+			return `call:${dms[0].id}:1`;
+		}
+	} catch (e) {
+		console.log("[CompleteDiscordQuest] Could not fetch DM channels for stream key:", e);
+	}
+
+	try {
+		const guilds = await desktopFetch("/users/@me/guilds");
+		if (Array.isArray(guilds)) {
+			for (const guild of guilds) {
+				if (!guild?.id) continue;
+				try {
+					const channels = await desktopFetch(`/guilds/${guild.id}/channels`);
+					const voiceChannel = Array.isArray(channels)
+						? channels.find((channel: any) => channel?.type === 2 && channel?.id)
+						: null;
+					if (voiceChannel?.id) {
+						return `call:${voiceChannel.id}:1`;
+					}
+				} catch {
+					// try next guild
+				}
+			}
+		}
+	} catch (e) {
+		console.log("[CompleteDiscordQuest] Could not fetch guild channels for stream key:", e);
+	}
+
+	return `call:${questId}:1`;
 }
 
 export class RateLimitError extends Error {
