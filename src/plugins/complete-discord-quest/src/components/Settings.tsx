@@ -7,7 +7,7 @@ import { startFarming, stopFarming } from "../questManager";
 import { vstorage } from "../settings";
 import { getActiveTasks } from "../tasks";
 
-const { ScrollView, Text, View } = General;
+const { ScrollView, View } = General;
 const { FormSection, FormRow, FormSwitchRow } = Forms;
 
 function formatProgress(progress: number, target: number): string {
