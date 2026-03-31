@@ -59,6 +59,15 @@ export default function Settings() {
 	useProxy(vstorage);
 	const [farming, setFarming] = React.useState(getActiveTasks().length > 0);
 
+	// Sync button state with actual tasks
+	React.useEffect(() => {
+		const interval = setInterval(() => {
+			const active = getActiveTasks().length > 0;
+			setFarming(active);
+		}, 2000);
+		return () => clearInterval(interval);
+	}, []);
+
 	return (
 		<ScrollView>
 			<ActiveTasksStatus />
@@ -67,12 +76,11 @@ export default function Settings() {
 				<View style={{ flexDirection: "row", padding: 12, gap: 8 }}>
 					<Button
 						text="Start Farming"
-						color={farming ? "grey" : "brand"}
+						color="brand"
 						size="small"
-						onPress={() => {
-							startFarming();
-							setFarming(true);
-							showToast("Farming started");
+						onPress={async () => {
+							showToast("Starting...");
+							await startFarming();
 						}}
 					/>
 					<Button

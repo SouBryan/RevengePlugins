@@ -43,11 +43,60 @@ export async function getQuests(): Promise<{ quests: Quest[] }> {
 }
 
 export async function enrollQuest(questId: string): Promise<any> {
-	const resp = await RestAPI.post({
-		url: `/quests/${questId}/enroll`,
-		body: { location: 11 },
-	});
-	return resp.body;
+	// Strategy 1: RestAPI with desktop spoof headers
+	try {
+		const resp = await RestAPI.post({
+			url: `/quests/${questId}/enroll`,
+			body: { location: "11" },
+			headers: getSpoofHeaders(),
+		});
+		console.log(`[CompleteDiscordQuest] Enrolled ${questId} via RestAPI+spoof`);
+		return resp.body;
+	} catch (e: any) {
+		console.log(`[CompleteDiscordQuest] Enroll strategy 1 failed for ${questId}: ${e?.status ?? e?.httpStatus} ${e?.body?.message ?? e?.message ?? ""}`);
+	}
+
+	// Strategy 2: RestAPI native (mobile headers)
+	try {
+		const resp = await RestAPI.post({
+			url: `/quests/${questId}/enroll`,
+			body: { location: "11" },
+		});
+		console.log(`[CompleteDiscordQuest] Enrolled ${questId} via RestAPI native`);
+		return resp.body;
+	} catch (e: any) {
+		console.log(`[CompleteDiscordQuest] Enroll strategy 2 failed for ${questId}: ${e?.status ?? e?.httpStatus} ${e?.body?.message ?? e?.message ?? ""}`);
+	}
+
+	// Strategy 3: fetch with full desktop headers
+	try {
+		const token = TokenModule?.getToken?.();
+		if (!token) throw new Error("No token");
+
+		const resp = await fetch(`${API_BASE}/quests/${questId}/enroll`, {
+			method: "POST",
+			headers: {
+				...getSpoofHeaders(),
+				Authorization: token,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ location: "11" }),
+		});
+
+		let data: any = {};
+		try { data = await resp.json(); } catch {}
+
+		if (resp.ok) {
+			console.log(`[CompleteDiscordQuest] Enrolled ${questId} via fetch`);
+			return data;
+		}
+		console.log(`[CompleteDiscordQuest] Enroll strategy 3 failed for ${questId}: HTTP ${resp.status} ${JSON.stringify(data)}`);
+		throw new Error(`Enroll failed: HTTP ${resp.status}`);
+	} catch (e: any) {
+		if (e?.message?.startsWith("Enroll failed")) throw e;
+		console.error(`[CompleteDiscordQuest] All enroll strategies failed for ${questId}:`, e);
+		throw e;
+	}
 }
 
 export async function sendVideoProgress(

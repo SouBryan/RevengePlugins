@@ -105,21 +105,34 @@ async function fetchQuests(): Promise<Quest[]> {
 }
 
 async function enrollPendingQuests(quests: Quest[]): Promise<Quest[]> {
-	const toEnroll = quests.filter((q) => !isQuestEnrolled(q) && isQuestEligible(q));
+	const toEnroll = quests.filter((q) => !isQuestEnrolled(q) && !isQuestExpired(q) && !isQuestCompleted(q));
+
+	if (toEnroll.length > 0) {
+		console.log(`[CompleteDiscordQuest] Attempting to enroll ${toEnroll.length} quest(s)`);
+	}
 
 	for (const quest of toEnroll) {
 		const name = quest.config?.messages?.quest_name ?? quest.id;
+		const task = getMainTask(quest);
+		console.log(`[CompleteDiscordQuest] Enrolling: ${name} (id=${quest.id}, type=${task?.type ?? "unknown"}, enrolled_at=${quest.user_status?.enrolled_at ?? "null"})`);
 		try {
 			const status = await enrollQuest(quest.id);
-			quest.user_status = status || {
-				enrolled_at: new Date().toISOString(),
-				completed_at: null,
-				progress: {},
-			};
-			console.log(`[CompleteDiscordQuest] Enrolled: ${name}`);
+			if (status?.enrolled_at) {
+				quest.user_status = status;
+			} else {
+				// Some APIs return the full user_status, others return partial
+				quest.user_status = {
+					...(quest.user_status ?? {}),
+					enrolled_at: status?.enrolled_at ?? new Date().toISOString(),
+					completed_at: null,
+					progress: status?.progress ?? {},
+				} as any;
+			}
+			console.log(`[CompleteDiscordQuest] Enrolled OK: ${name}`);
 			showToast(`Quest enrolled: ${name}`);
-		} catch (e) {
-			console.error(`[CompleteDiscordQuest] Failed to enroll ${name}:`, e);
+		} catch (e: any) {
+			console.error(`[CompleteDiscordQuest] Failed to enroll ${name}: ${e?.message ?? e}`);
+			showToast(`Failed to enroll: ${name}`);
 		}
 	}
 
@@ -129,8 +142,15 @@ async function enrollPendingQuests(quests: Quest[]): Promise<Quest[]> {
 export async function startFarming(): Promise<void> {
 	try {
 		let quests = await fetchQuests();
+		console.log(`[CompleteDiscordQuest] Fetched ${quests.length} quest(s)`);
 
-		// Always try to enroll when manually starting; autoAccept controls the Flux auto-trigger
+		for (const q of quests) {
+			const name = q.config?.messages?.quest_name ?? q.id;
+			const task = getMainTask(q);
+			console.log(`[CompleteDiscordQuest] Quest: ${name} | id=${q.id} | type=${task?.type ?? "none"} | enrolled=${!!q.user_status?.enrolled_at} | completed=${!!q.user_status?.completed_at} | expired=${isQuestExpired(q)}`);
+		}
+
+		// Always try to enroll when manually starting
 		quests = await enrollPendingQuests(quests);
 
 		const eligible = quests.filter(
@@ -139,6 +159,7 @@ export async function startFarming(): Promise<void> {
 
 		if (eligible.length === 0) {
 			console.log("[CompleteDiscordQuest] No eligible quests to farm");
+			showToast("No eligible quests found");
 			return;
 		}
 
@@ -155,6 +176,7 @@ export async function startFarming(): Promise<void> {
 		}
 	} catch (e) {
 		console.error("[CompleteDiscordQuest] startFarming error:", e);
+		showToast("Farming error - check logs");
 	}
 }
 
