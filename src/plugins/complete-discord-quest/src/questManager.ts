@@ -2,9 +2,14 @@ import { showToast } from "@vendetta/ui/toasts";
 
 import { enrollQuest, getQuests } from "./api";
 import { vstorage } from "./settings";
-import { FluxDispatcher, QuestsStore } from "./stores";
+import { getQuestStoreDiagnostics, getQuestsStore } from "./stores";
 import { getMainTask, isTaskActive, startTask, stopAllTasks } from "./tasks";
 import type { Quest, QuestTaskType } from "./types";
+
+let cachedQuests: any[] = [];
+let cachedQuestSource = "none";
+let cachedQuestEventType = "none";
+let cachedQuestEventKeys = "none";
 
 // ---- Helpers for camelCase/snake_case dual access on raw QuestsStore data ----
 function prop(obj: any, ...keys: string[]): any {
@@ -126,9 +131,76 @@ function isQuestEligible(q: any): boolean {
 
 // ---- Fetch quests from QuestsStore (handles Map or Object) ----
 
+function isQuestLike(value: any): boolean {
+	return !!value
+		&& typeof value === "object"
+		&& typeof value.id === "string"
+		&& typeof value.config === "object";
+}
+
+function extractQuestArray(value: any, depth = 0): any[] {
+	if (!value || depth > 3) return [];
+	if (isQuestLike(value)) return [value];
+
+	if (value instanceof Map) {
+		return extractQuestArray([...value.values()], depth + 1);
+	}
+
+	if (Array.isArray(value)) {
+		const direct = value.filter(isQuestLike);
+		if (direct.length > 0) return direct;
+
+		const nested = value.flatMap((entry) => extractQuestArray(entry, depth + 1));
+		if (nested.length > 0) return nested;
+		return [];
+	}
+
+	if (typeof value === "object") {
+		const direct = Object.values(value).filter(isQuestLike);
+		if (direct.length > 0) return direct;
+
+		for (const key of ["quests", "quest", "body", "data", "payload", "result"]) {
+			const nested = extractQuestArray(value[key], depth + 1);
+			if (nested.length > 0) return nested;
+		}
+	}
+
+	return [];
+}
+
+function markQuestEnrolledLocally(quest: any): void {
+	const now = new Date().toISOString();
+	if (quest?.userStatus) {
+		quest.userStatus.enrolledAt ??= now;
+		quest.userStatus.completedAt ??= null;
+		quest.userStatus.progress ??= {};
+		return;
+	}
+
+	quest.user_status ??= {};
+	quest.user_status.enrolled_at ??= now;
+	quest.user_status.completed_at ??= null;
+	quest.user_status.progress ??= {};
+}
+
+export function ingestQuestEvent(eventType: string, payload: any): void {
+	cachedQuestEventType = eventType;
+	cachedQuestEventKeys = payload && typeof payload === "object"
+		? Object.keys(payload).slice(0, 20).join(",") || "none"
+		: String(payload);
+
+	const extracted = extractQuestArray(payload);
+	if (extracted.length > 0) {
+		cachedQuests = extracted;
+		cachedQuestSource = `flux:${eventType}`;
+		console.log(`[CompleteDiscordQuest] Cached ${extracted.length} quest(s) from ${eventType}`);
+	}
+}
+
 function fetchQuestsFromStore(): any[] {
 	try {
-		const storeQuests = QuestsStore?.quests;
+		const questStore = getQuestsStore();
+		const storeQuests = questStore?.quests;
 		if (!storeQuests) return [];
 
 		// Handle Map (Vencord-style: QuestsStore.quests is a Map)
@@ -156,8 +228,13 @@ async function fetchQuests(): Promise<any[]> {
 		return storeQuests;
 	}
 
+	if (cachedQuests.length > 0) {
+		console.log(`[CompleteDiscordQuest] Got ${cachedQuests.length} quest(s) from ${cachedQuestSource}`);
+		return cachedQuests;
+	}
+
 	// Fallback: REST API (only returns enrolled quests)
-	console.log("[CompleteDiscordQuest] QuestsStore empty, falling back to REST");
+	console.log(`[CompleteDiscordQuest] No quest cache found, falling back to REST (${getQuestStoreDiagnostics()})`);
 	const resp = await getQuests();
 	return resp.quests ?? [];
 }
@@ -177,6 +254,7 @@ async function enrollPendingQuests(quests: any[]): Promise<any[]> {
 		console.log(`[CompleteDiscordQuest] Enrolling: ${name} (id=${quest.id}, type=${task?.type ?? "unknown"}, enrolledAt=${getEnrolledAt(quest) ?? "null"})`);
 		try {
 			await enrollQuest(quest.id);
+			markQuestEnrolledLocally(quest);
 			console.log(`[CompleteDiscordQuest] Enrolled OK: ${name}`);
 			showToast(`Quest enrolled: ${name}`);
 		} catch (e: any) {
@@ -205,15 +283,14 @@ export async function startFarming(): Promise<void> {
 		// Enroll quests that haven't been accepted yet
 		quests = await enrollPendingQuests(quests);
 
-		// For farming, accept quests even if enrollment API failed —
-		// the quest might already be enrolled (QuestsStore reflects real status)
+		// Only start tasks after the quest is marked enrolled locally or by Discord.
 		const eligible = quests.filter(
-			(q: any) => !isQuestCompleted(q) && !isQuestExpired(q) && isQuestEligible(q) && !isTaskActive(q.id),
+			(q: any) => isQuestEnrolled(q) && !isQuestCompleted(q) && !isQuestExpired(q) && isQuestEligible(q) && !isTaskActive(q.id),
 		);
 
 		if (eligible.length === 0) {
-			console.log("[CompleteDiscordQuest] No eligible quests to farm");
-			showToast("No eligible quests found");
+			console.log(`[CompleteDiscordQuest] No eligible quests to farm (${getQuestStoreDiagnostics()})`);
+			showToast("No eligible enrolled quests found");
 			return;
 		}
 
@@ -242,13 +319,28 @@ export function stopFarming(): void {
 // ---- Debug: dump QuestsStore raw data ----
 export function debugDumpQuests(): string {
 	// Check QuestsStore type
-	const raw = QuestsStore?.quests;
+	const raw = getQuestsStore()?.quests;
 	const storeType = raw instanceof Map ? "Map" : (Array.isArray(raw) ? "Array" : typeof raw);
 
-	const quests = fetchQuestsFromStore();
-	if (quests.length === 0) return `QuestsStore is empty (type=${storeType}, raw keys=${raw ? Object.keys(raw).slice(0, 5).join(",") : "null"})`;
+	const quests = fetchQuestsFromStore().length > 0 ? fetchQuestsFromStore() : cachedQuests;
+	if (quests.length === 0) {
+		return [
+			`Quests unavailable (type=${storeType}, raw keys=${raw ? Object.keys(raw).slice(0, 10).join(",") : "null"})`,
+			`store diagnostics: ${getQuestStoreDiagnostics()}`,
+			`flux cache source: ${cachedQuestSource}`,
+			`last flux event: ${cachedQuestEventType}`,
+			`last flux keys: ${cachedQuestEventKeys}`,
+		].join("\n");
+	}
 
-	const lines: string[] = [`Total: ${quests.length} quest(s) [store type=${storeType}]\n`];
+	const lines: string[] = [
+		`Total: ${quests.length} quest(s) [store type=${storeType}]`,
+		`store diagnostics: ${getQuestStoreDiagnostics()}`,
+		`flux cache source: ${cachedQuestSource}`,
+		`last flux event: ${cachedQuestEventType}`,
+		`last flux keys: ${cachedQuestEventKeys}`,
+		"",
+	];
 	for (const q of quests) {
 		const name = getQuestName(q);
 		const task = getMainTask(q);

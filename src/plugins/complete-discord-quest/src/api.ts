@@ -1,4 +1,9 @@
-import { ChannelStore, FluxDispatcher, RestAPI, TokenModule } from "./stores";
+import {
+	FluxDispatcher,
+	getChannelStore,
+	getRestAPI,
+	getTokenModule,
+} from "./stores";
 import type { Quest } from "./types";
 
 const API_BASE = "https://discord.com/api/v9";
@@ -71,7 +76,9 @@ function findQuestEnrollAction(): typeof _questEnrollAction {
 // ---- REST via native Discord module ----
 
 export async function getQuests(): Promise<{ quests: Quest[] }> {
-	const resp = await RestAPI.get({ url: "/quests/@me" });
+	const restAPI = getRestAPI();
+	if (!restAPI) throw new Error("Discord RestAPI module not found");
+	const resp = await restAPI.get({ url: "/quests/@me" });
 	return resp.body;
 }
 
@@ -94,7 +101,9 @@ export async function enrollQuest(questId: string): Promise<any> {
 
 	// Strategy 1: RestAPI native (mobile-style, no header spoofing)
 	try {
-		const resp = await RestAPI.post({
+		const restAPI = getRestAPI();
+		if (!restAPI) throw new Error("Discord RestAPI module not found");
+		const resp = await restAPI.post({
 			url: `/quests/${questId}/enroll`,
 			body: { location: "11" },
 		});
@@ -106,7 +115,9 @@ export async function enrollQuest(questId: string): Promise<any> {
 
 	// Strategy 2: RestAPI with desktop spoof headers
 	try {
-		const resp = await RestAPI.post({
+		const restAPI = getRestAPI();
+		if (!restAPI) throw new Error("Discord RestAPI module not found");
+		const resp = await restAPI.post({
 			url: `/quests/${questId}/enroll`,
 			body: { location: "11" },
 			headers: getSpoofHeaders(),
@@ -119,7 +130,7 @@ export async function enrollQuest(questId: string): Promise<any> {
 
 	// Strategy 3: fetch with full desktop headers
 	try {
-		const token = TokenModule?.getToken?.();
+		const token = getTokenModule()?.getToken?.();
 		if (!token) throw new Error("No token");
 
 		const resp = await fetch(`${API_BASE}/quests/${questId}/enroll`, {
@@ -166,7 +177,9 @@ export async function sendVideoProgress(
 	questId: string,
 	timestamp: number,
 ): Promise<any> {
-	const resp = await RestAPI.post({
+	const restAPI = getRestAPI();
+	if (!restAPI) throw new Error("Discord RestAPI module not found");
+	const resp = await restAPI.post({
 		url: `/quests/${questId}/video-progress`,
 		body: { timestamp },
 	});
@@ -184,7 +197,9 @@ export async function sendHeartbeat(
 
 	// Strategy 1: Use RestAPI.post with custom headers (token is auto-injected)
 	try {
-		const resp = await RestAPI.post({
+		const restAPI = getRestAPI();
+		if (!restAPI) throw new Error("Discord RestAPI module not found");
+		const resp = await restAPI.post({
 			url: `/quests/${questId}/heartbeat`,
 			body,
 			headers: getSpoofHeaders(),
@@ -208,7 +223,7 @@ export async function sendHeartbeat(
 
 	// Strategy 2: Use raw fetch with manual token
 	try {
-		const token = TokenModule?.getToken?.();
+		const token = getTokenModule()?.getToken?.();
 		if (!token) throw new Error("No token");
 
 		console.log(
@@ -272,7 +287,9 @@ export async function sendHeartbeatNative(
 	streamKey: string,
 	terminal: boolean,
 ): Promise<any> {
-	const resp = await RestAPI.post({
+	const restAPI = getRestAPI();
+	if (!restAPI) throw new Error("Discord RestAPI module not found");
+	const resp = await restAPI.post({
 		url: `/quests/${questId}/heartbeat`,
 		body: { stream_key: streamKey, terminal },
 	});
@@ -284,7 +301,7 @@ export async function sendHeartbeatNative(
 export function findStreamKey(): string {
 	// Try to find a DM channel or voice channel ID for the stream_key
 	try {
-		const privateChannels = ChannelStore?.getSortedPrivateChannels?.();
+		const privateChannels = getChannelStore()?.getSortedPrivateChannels?.();
 		if (privateChannels?.length > 0) {
 			return `call:${privateChannels[0].id}:1`;
 		}

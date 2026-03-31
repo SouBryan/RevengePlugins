@@ -1,5 +1,5 @@
 import Settings from "./components/Settings";
-import { startFarming, stopFarming } from "./questManager";
+import { ingestQuestEvent, startFarming, stopFarming } from "./questManager";
 import { initDefaults, vstorage } from "./settings";
 import { FluxDispatcher } from "./stores";
 
@@ -8,7 +8,15 @@ let fluxUnsubs: (() => void)[] = [];
 export function onLoad() {
 	initDefaults();
 
-	const onQuestsUpdate = () => {
+	const onQuestsUpdate = (event: any) => {
+		ingestQuestEvent("QUESTS_FETCH_SUCCESS", event);
+		if (vstorage.autoAccept) {
+			startFarming();
+		}
+	};
+
+	const onQuestEnrolled = (event: any) => {
+		ingestQuestEvent("QUEST_ENROLLED", event);
 		if (vstorage.autoAccept) {
 			startFarming();
 		}
@@ -30,13 +38,13 @@ export function onLoad() {
 	};
 
 	FluxDispatcher.subscribe("QUESTS_FETCH_SUCCESS", onQuestsUpdate);
-	FluxDispatcher.subscribe("QUEST_ENROLLED", onQuestsUpdate);
+	FluxDispatcher.subscribe("QUEST_ENROLLED", onQuestEnrolled);
 	FluxDispatcher.subscribe("CONNECTION_OPEN", onReady);
 	FluxDispatcher.subscribe("CONNECTION_CLOSED", onConnectionClosed);
 
 	fluxUnsubs.push(
 		() => FluxDispatcher.unsubscribe("QUESTS_FETCH_SUCCESS", onQuestsUpdate),
-		() => FluxDispatcher.unsubscribe("QUEST_ENROLLED", onQuestsUpdate),
+		() => FluxDispatcher.unsubscribe("QUEST_ENROLLED", onQuestEnrolled),
 		() => FluxDispatcher.unsubscribe("CONNECTION_OPEN", onReady),
 		() => FluxDispatcher.unsubscribe("CONNECTION_CLOSED", onConnectionClosed),
 	);
