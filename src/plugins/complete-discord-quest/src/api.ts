@@ -401,7 +401,10 @@ export async function findStreamKeyForQuest(questId: string): Promise<string> {
 			return `call:${dms[0].id}:1`;
 		}
 	} catch (e) {
-		console.log("[CompleteDiscordQuest] Could not fetch DM channels via RestAPI for stream key:", e);
+		console.log(
+			"[CompleteDiscordQuest] Could not fetch DM channels via RestAPI for stream key:",
+			e,
+		);
 	}
 
 	try {
@@ -423,7 +426,10 @@ export async function findStreamKeyForQuest(questId: string): Promise<string> {
 			}
 		}
 	} catch (e) {
-		console.log("[CompleteDiscordQuest] Could not fetch guild channels via RestAPI for stream key:", e);
+		console.log(
+			"[CompleteDiscordQuest] Could not fetch guild channels via RestAPI for stream key:",
+			e,
+		);
 	}
 
 	try {

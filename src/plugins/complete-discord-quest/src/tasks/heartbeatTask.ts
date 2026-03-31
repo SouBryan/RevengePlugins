@@ -95,7 +95,9 @@ async function startManualHeartbeatLoop(
 		return () => {};
 	}
 
-	console.log(`[CompleteDiscordQuest] Starting ${taskType} loop for ${quest.id} with stream_key=${streamKey}`);
+	console.log(
+		`[CompleteDiscordQuest] Starting ${taskType} loop for ${quest.id} with stream_key=${streamKey}`,
+	);
 	beat(false);
 
 	return () => {
