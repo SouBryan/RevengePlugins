@@ -29,6 +29,17 @@ function buildSuperProperties(): string {
 	return btoa(JSON.stringify(props));
 }
 
+function getAuthToken(): string {
+	const tokenModule = getTokenModule();
+	const rawToken = tokenModule?.getToken?.() ?? tokenModule?.default?.getToken?.();
+	const token = typeof rawToken === "string" ? rawToken.trim() : "";
+	if (!token) {
+		throw new Error("No token");
+	}
+	return token;
+
+}
+
 async function restGet(path: string): Promise<any> {
 	const restAPI = getRestAPI();
 	if (!restAPI) throw new Error("Discord RestAPI module not found");
@@ -46,15 +57,26 @@ function getSpoofHeaders(): Record<string, string> {
 	};
 }
 
-async function desktopFetch(path: string): Promise<any> {
-	const token = getTokenModule()?.getToken?.();
-	if (!token) throw new Error("No token");
+function getSpoofAuthHeaders(): Record<string, string> {
+	return {
+		...getSpoofHeaders(),
+		authorization: getAuthToken(),
+	};
+}
 
+function getErrorStatus(error: any): number | string | undefined {
+	return error?.status ?? error?.httpStatus ?? error?.body?.code;
+}
+
+function getErrorMessage(error: any): string {
+	return error?.body?.message ?? error?.message ?? JSON.stringify(error);
+}
+
+async function desktopFetch(path: string): Promise<any> {
 	const resp = await fetch(`${API_BASE}${path}`, {
 		method: "GET",
 		headers: {
-			...getSpoofHeaders(),
-			Authorization: token,
+			...getSpoofAuthHeaders(),
 			"Content-Type": "application/json",
 		},
 	});
@@ -175,14 +197,10 @@ export async function enrollQuest(questId: string): Promise<any> {
 
 	// Strategy 3: fetch with full desktop headers
 	try {
-		const token = getTokenModule()?.getToken?.();
-		if (!token) throw new Error("No token");
-
 		const resp = await fetch(`${API_BASE}/quests/${questId}/enroll`, {
 			method: "POST",
 			headers: {
-				...getSpoofHeaders(),
-				Authorization: token,
+				...getSpoofAuthHeaders(),
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({ location: "11" }),
@@ -256,8 +274,34 @@ export async function sendHeartbeat(
 	terminal: boolean,
 ): Promise<any> {
 	const body = { stream_key: streamKey, terminal };
+	const failures: string[] = [];
 
-	// Strategy 1: Use RestAPI.post with custom headers (token is auto-injected)
+	// Strategy 1: RestAPI.post with desktop spoof headers and explicit auth token.
+	try {
+		const restAPI = getRestAPI();
+		if (!restAPI) throw new Error("Discord RestAPI module not found");
+		const resp = await restAPI.post({
+			url: `/quests/${questId}/heartbeat`,
+			body,
+			headers: getSpoofAuthHeaders(),
+		});
+		console.log("[CompleteDiscordQuest] Heartbeat OK via RestAPI (strategy 1 explicit auth)");
+		return resp.body;
+	} catch (e: any) {
+		const status = getErrorStatus(e);
+		const message = getErrorMessage(e);
+		failures.push(`s1=${status ?? "unknown"}:${message}`);
+		console.log(
+			`[CompleteDiscordQuest] Strategy 1 (RestAPI+headers+auth) failed: status=${status}, message=${message}`,
+		);
+
+		if (status === 429) {
+			const retryAfter = e?.body?.retry_after ?? 60;
+			throw new RateLimitError(retryAfter);
+		}
+	}
+
+	// Strategy 2: Use RestAPI.post with custom headers and session auth.
 	try {
 		const restAPI = getRestAPI();
 		if (!restAPI) throw new Error("Discord RestAPI module not found");
@@ -266,37 +310,35 @@ export async function sendHeartbeat(
 			body,
 			headers: getSpoofHeaders(),
 		});
-		console.log(`[CompleteDiscordQuest] Heartbeat OK via RestAPI (strategy 1)`);
+		console.log("[CompleteDiscordQuest] Heartbeat OK via RestAPI (strategy 2 session auth)");
 		return resp.body;
 	} catch (e: any) {
-		const status = e?.status ?? e?.httpStatus ?? e?.body?.code;
+		const status = getErrorStatus(e);
+		const message = getErrorMessage(e);
+		failures.push(`s2=${status ?? "unknown"}:${message}`);
 		console.log(
-			`[CompleteDiscordQuest] Strategy 1 (RestAPI+headers) failed: status=${status}, message=${
-				e?.message ?? e?.body?.message ?? JSON.stringify(e)
-			}`,
+			`[CompleteDiscordQuest] Strategy 2 (RestAPI+headers) failed: status=${status}, message=${message}`,
 		);
 
-		// If it's rate limited, throw immediately
 		if (status === 429) {
 			const retryAfter = e?.body?.retry_after ?? 60;
 			throw new RateLimitError(retryAfter);
 		}
 	}
 
-	// Strategy 2: Use raw fetch with manual token
+	// Strategy 3: Raw fetch with explicit token.
 	try {
-		const token = getTokenModule()?.getToken?.();
-		if (!token) throw new Error("No token");
+		const token = getAuthToken();
 
 		console.log(
-			`[CompleteDiscordQuest] Trying strategy 2 (fetch), token starts with: ${
+			`[CompleteDiscordQuest] Trying strategy 3 (fetch), token starts with: ${
 				token.substring(0, 10)
 			}...`,
 		);
 
 		const headers: Record<string, string> = {
 			...getSpoofHeaders(),
-			Authorization: token,
+			authorization: token,
 			"Content-Type": "application/json",
 		};
 
@@ -307,7 +349,7 @@ export async function sendHeartbeat(
 		});
 
 		if (resp.status === 204) {
-			console.log(`[CompleteDiscordQuest] Heartbeat OK via fetch (strategy 2)`);
+			console.log("[CompleteDiscordQuest] Heartbeat OK via fetch (strategy 3)");
 			return {};
 		}
 
@@ -319,27 +361,28 @@ export async function sendHeartbeat(
 		}
 
 		if (resp.ok) {
-			console.log(`[CompleteDiscordQuest] Heartbeat OK via fetch (strategy 2)`);
+			console.log("[CompleteDiscordQuest] Heartbeat OK via fetch (strategy 3)");
 			return data;
 		}
 
 		console.log(
-			`[CompleteDiscordQuest] Strategy 2 (fetch) failed: HTTP ${resp.status}, body=${
+			`[CompleteDiscordQuest] Strategy 3 (fetch) failed: HTTP ${resp.status}, body=${
 				JSON.stringify(data)
 			}`,
 		);
+		failures.push(`s3=${resp.status}:${JSON.stringify(data)}`);
 
 		if (resp.status === 429) {
 			throw new RateLimitError(data?.retry_after ?? 60);
 		}
 		if (resp.status === 401 || resp.status === 403) {
-			throw new AuthError(`HTTP ${resp.status}: ${JSON.stringify(data)}`);
+			throw new AuthError(`stream_key=${streamKey} | HTTP ${resp.status}: ${JSON.stringify(data)} | ${failures.join(" | ")}`);
 		}
-		throw new Error(`HTTP ${resp.status}: ${JSON.stringify(data)}`);
+		throw new Error(`stream_key=${streamKey} | HTTP ${resp.status}: ${JSON.stringify(data)} | ${failures.join(" | ")}`);
 	} catch (e) {
 		if (e instanceof RateLimitError || e instanceof AuthError) throw e;
-		console.error(`[CompleteDiscordQuest] Strategy 2 (fetch) exception:`, e);
-		throw e;
+		console.error("[CompleteDiscordQuest] Strategy 3 (fetch) exception:", e);
+		throw new Error(`stream_key=${streamKey} | ${e instanceof Error ? e.message : String(e)} | ${failures.join(" | ")}`);
 	}
 }
 
