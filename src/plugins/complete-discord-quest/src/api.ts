@@ -37,7 +37,6 @@ function getAuthToken(): string {
 		throw new Error("No token");
 	}
 	return token;
-
 }
 
 async function restGet(path: string): Promise<any> {
@@ -376,13 +375,25 @@ export async function sendHeartbeat(
 			throw new RateLimitError(data?.retry_after ?? 60);
 		}
 		if (resp.status === 401 || resp.status === 403) {
-			throw new AuthError(`stream_key=${streamKey} | HTTP ${resp.status}: ${JSON.stringify(data)} | ${failures.join(" | ")}`);
+			throw new AuthError(
+				`stream_key=${streamKey} | HTTP ${resp.status}: ${JSON.stringify(data)} | ${
+					failures.join(" | ")
+				}`,
+			);
 		}
-		throw new Error(`stream_key=${streamKey} | HTTP ${resp.status}: ${JSON.stringify(data)} | ${failures.join(" | ")}`);
+		throw new Error(
+			`stream_key=${streamKey} | HTTP ${resp.status}: ${JSON.stringify(data)} | ${
+				failures.join(" | ")
+			}`,
+		);
 	} catch (e) {
 		if (e instanceof RateLimitError || e instanceof AuthError) throw e;
 		console.error("[CompleteDiscordQuest] Strategy 3 (fetch) exception:", e);
-		throw new Error(`stream_key=${streamKey} | ${e instanceof Error ? e.message : String(e)} | ${failures.join(" | ")}`);
+		throw new Error(
+			`stream_key=${streamKey} | ${e instanceof Error ? e.message : String(e)} | ${
+				failures.join(" | ")
+			}`,
+		);
 	}
 }
 
