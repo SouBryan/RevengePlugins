@@ -1,5 +1,6 @@
 import { AuthError, RateLimitError, sendVideoProgress } from "../api";
 import type { Quest, QuestTaskType } from "../types";
+import { updateTaskProgress } from "./index";
 
 function getProgress(quest: Quest, taskType: QuestTaskType): number {
 	const progress = quest.user_status?.progress?.[taskType];
@@ -34,6 +35,7 @@ export function startVideoTask(
 			try {
 				const resp = await sendVideoProgress(quest.id, next);
 				currentProgress = next;
+				updateTaskProgress(quest.id, currentProgress, "running");
 
 				const taskProgress = resp?.progress?.[taskType];
 				if (taskProgress?.completed_at || currentProgress >= target) {
@@ -42,14 +44,18 @@ export function startVideoTask(
 				}
 			} catch (e) {
 				if (e instanceof RateLimitError) {
+					updateTaskProgress(quest.id, currentProgress, "rate-limited", `Rate limited ${e.retryAfter}s`);
 					timeoutId = setTimeout(tick, e.retryAfter * 1000);
 					return;
 				}
 				if (e instanceof AuthError) {
+					updateTaskProgress(quest.id, currentProgress, "error", "Auth failed (401/403)");
 					console.error(`[CompleteDiscordQuest] Auth failed, stopping video task`);
 					cancelled = true;
 					return;
 				}
+				const errMsg = e instanceof Error ? e.message : String(e);
+				updateTaskProgress(quest.id, currentProgress, "error", errMsg);
 				console.error(`[CompleteDiscordQuest] Video progress error for ${quest.id}:`, e);
 			}
 		}

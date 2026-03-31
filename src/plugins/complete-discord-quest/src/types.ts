@@ -101,6 +101,19 @@ export interface QuestProgress {
 	} | null;
 }
 
+// ---- Plugin Internal Types ----
+
+export interface ActiveTask {
+	questId: string;
+	questName: string;
+	taskType: QuestTaskType;
+	target: number;
+	progress: number;
+	status: "running" | "error" | "rate-limited";
+	lastError?: string;
+	cleanup: () => void;
+}
+
 // ---- Enums ----
 
 export type QuestTaskType =
@@ -116,13 +129,4 @@ export enum QuestRewardType {
 	COLLECTIBLE = 3,
 	VIRTUAL_CURRENCY = 4,
 	FRACTIONAL_PREMIUM = 5,
-}
-
-// ---- Task Runner Types ----
-
-export interface ActiveTask {
-	questId: string;
-	questName: string;
-	taskType: QuestTaskType;
-	cleanup: () => void;
 }

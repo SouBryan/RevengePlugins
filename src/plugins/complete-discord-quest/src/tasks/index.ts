@@ -33,6 +33,19 @@ export function startTask(quest: Quest, onComplete?: () => void): boolean {
 
 	const questName = quest.config?.messages?.quest_name ?? quest.id;
 
+	const activeTask: ActiveTask = {
+		questId: quest.id,
+		questName,
+		taskType: task.type,
+		target: task.target,
+		progress: 0,
+		status: "running",
+		cleanup: () => {},
+	};
+
+	// Add to map early so heartbeat callbacks can update it
+	activeTasks.set(quest.id, activeTask);
+
 	const handleComplete = () => {
 		activeTasks.delete(quest.id);
 		console.log(`[CompleteDiscordQuest] Quest complete: ${questName}`);
@@ -47,12 +60,7 @@ export function startTask(quest: Quest, onComplete?: () => void): boolean {
 		cleanup = startHeartbeatTask(quest, task.type, task.target, handleComplete);
 	}
 
-	activeTasks.set(quest.id, {
-		questId: quest.id,
-		questName,
-		taskType: task.type,
-		cleanup,
-	});
+	activeTask.cleanup = cleanup;
 
 	console.log(
 		`[CompleteDiscordQuest] Started ${task.type} for: ${questName} (target: ${task.target}s)`,
@@ -81,6 +89,15 @@ export function isTaskActive(questId: string): boolean {
 
 export function getActiveTasks(): ActiveTask[] {
 	return Array.from(activeTasks.values());
+}
+
+export function updateTaskProgress(questId: string, progress: number, status: "running" | "error" | "rate-limited", lastError?: string): void {
+	const task = activeTasks.get(questId);
+	if (task) {
+		task.progress = progress;
+		task.status = status;
+		task.lastError = lastError;
+	}
 }
 
 export { getMainTask };

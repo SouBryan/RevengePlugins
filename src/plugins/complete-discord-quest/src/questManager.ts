@@ -130,9 +130,8 @@ export async function startFarming(): Promise<void> {
 	try {
 		let quests = await fetchQuests();
 
-		if (vstorage.autoAccept) {
-			quests = await enrollPendingQuests(quests);
-		}
+		// Always try to enroll when manually starting; autoAccept controls the Flux auto-trigger
+		quests = await enrollPendingQuests(quests);
 
 		const eligible = quests.filter(
 			(q) => isQuestEnrolled(q) && isQuestEligible(q) && !isTaskActive(q.id),

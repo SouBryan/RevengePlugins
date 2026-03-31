@@ -6,6 +6,7 @@ import {
 	sendHeartbeatNative,
 } from "../api";
 import type { Quest, QuestTaskType } from "../types";
+import { updateTaskProgress } from "./index";
 
 const HEARTBEAT_INTERVAL_MS = 25_000; // 25s between heartbeats
 
@@ -43,6 +44,9 @@ export function startHeartbeatTask(
 				currentProgress = taskProgress.value;
 			}
 
+			updateTaskProgress(quest.id, currentProgress, "running");
+			console.log(`[CompleteDiscordQuest] Heartbeat OK for ${quest.id}: ${currentProgress}/${target}s`);
+
 			if (currentProgress >= target) {
 				// Send terminal heartbeat
 				try {
@@ -55,14 +59,18 @@ export function startHeartbeatTask(
 			}
 		} catch (e) {
 			if (e instanceof RateLimitError) {
+				updateTaskProgress(quest.id, currentProgress, "rate-limited", `Rate limited ${e.retryAfter}s`);
 				timeoutId = setTimeout(beat, e.retryAfter * 1000);
 				return;
 			}
 			if (e instanceof AuthError) {
+				updateTaskProgress(quest.id, currentProgress, "error", "Auth failed (401/403)");
 				console.error(`[CompleteDiscordQuest] Auth failed, stopping heartbeat task`);
 				cancelled = true;
 				return;
 			}
+			const errMsg = e instanceof Error ? e.message : String(e);
+			updateTaskProgress(quest.id, currentProgress, "error", errMsg);
 			console.error(`[CompleteDiscordQuest] Heartbeat error for ${quest.id}:`, e);
 		}
 

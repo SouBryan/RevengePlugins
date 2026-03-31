@@ -7,14 +7,28 @@ import { startFarming, stopFarming } from "../questManager";
 import { vstorage } from "../settings";
 import { getActiveTasks } from "../tasks";
 
-const { Text, View } = General;
+const { ScrollView, Text, View } = General;
 const { FormSection, FormRow, FormSwitchRow } = Forms;
+
+function formatProgress(progress: number, target: number): string {
+	const pct = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0;
+	const mins = Math.floor(progress / 60);
+	const targetMins = Math.floor(target / 60);
+	return `${mins}m / ${targetMins}m (${pct}%)`;
+}
+
+function taskStatusLabel(t: ReturnType<typeof getActiveTasks>[0]): string {
+	const prog = formatProgress(t.progress, t.target);
+	if (t.status === "error") return `${t.taskType} — ERROR: ${t.lastError ?? "unknown"}`;
+	if (t.status === "rate-limited") return `${t.taskType} — ${prog} ⏳ ${t.lastError ?? "rate limited"}`;
+	return `${t.taskType} — ${prog}`;
+}
 
 function ActiveTasksStatus() {
 	const [tasks, setTasks] = React.useState(getActiveTasks());
 
 	React.useEffect(() => {
-		const interval = setInterval(() => setTasks(getActiveTasks()), 2000);
+		const interval = setInterval(() => setTasks([...getActiveTasks()]), 2000);
 		return () => clearInterval(interval);
 	}, []);
 
@@ -32,7 +46,7 @@ function ActiveTasksStatus() {
 				<FormRow
 					key={t.questId}
 					label={t.questName}
-					subLabel={t.taskType}
+					subLabel={taskStatusLabel(t)}
 				/>
 			))}
 		</FormSection>
@@ -44,7 +58,7 @@ export default function Settings() {
 	const [farming, setFarming] = React.useState(getActiveTasks().length > 0);
 
 	return (
-		<>
+		<ScrollView>
 			<ActiveTasksStatus />
 
 			<FormSection title="Controls">
@@ -135,6 +149,6 @@ export default function Settings() {
 					onValueChange={(v: boolean) => (vstorage.filterFractionalPremium = v)}
 				/>
 			</FormSection>
-		</>
+		</ScrollView>
 	);
 }
