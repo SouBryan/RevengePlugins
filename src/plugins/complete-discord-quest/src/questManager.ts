@@ -5,11 +5,11 @@ import { vstorage } from "./settings";
 import {
 	describeQuestCandidate,
 	getQuestModuleCandidates,
-	getQuestStoreDiagnostics,
 	getQuestsStore,
+	getQuestStoreDiagnostics,
 } from "./stores";
 import { getMainTask, isTaskActive, startTask, stopAllTasks } from "./tasks";
-import type { Quest, QuestTaskType } from "./types";
+import type { QuestTaskType } from "./types";
 
 let cachedQuests: any[] = [];
 let cachedQuestSource = "none";
@@ -113,12 +113,18 @@ function matchesRewardFilter(q: any): boolean {
 
 	return rewards.some((r: any) => {
 		switch (r.type) {
-			case 1: return vstorage.filterRewardCodes;
-			case 2: return vstorage.filterInGame;
-			case 3: return vstorage.filterCollectibles;
-			case 4: return vstorage.filterVirtualCurrency;
-			case 5: return vstorage.filterFractionalPremium;
-			default: return false;
+			case 1:
+				return vstorage.filterRewardCodes;
+			case 2:
+				return vstorage.filterInGame;
+			case 3:
+				return vstorage.filterCollectibles;
+			case 4:
+				return vstorage.filterVirtualCurrency;
+			case 5:
+				return vstorage.filterFractionalPremium;
+			default:
+				return false;
 		}
 	});
 }
@@ -229,7 +235,8 @@ function fetchQuestsFromStore(): any[] {
 function probeQuestModules(): any[] {
 	const candidates = getQuestModuleCandidates();
 	cachedQuestProbeSummary = candidates.length > 0
-		? candidates.slice(0, 8).map((candidate, index) => describeQuestCandidate(candidate, index)).join(" | ")
+		? candidates.slice(0, 8).map((candidate, index) => describeQuestCandidate(candidate, index))
+			.join(" | ")
 		: "none";
 
 	for (const candidate of candidates) {
@@ -245,8 +252,12 @@ function probeQuestModules(): any[] {
 			const extracted = extractQuestArray(source);
 			if (extracted.length > 0) {
 				cachedQuests = extracted;
-				cachedQuestSource = `module-probe:${typeof candidate?.getName === "function" ? candidate.getName() : "unnamed"}`;
-				console.log(`[CompleteDiscordQuest] Probed ${extracted.length} quest(s) from ${cachedQuestSource}`);
+				cachedQuestSource = `module-probe:${
+					typeof candidate?.getName === "function" ? candidate.getName() : "unnamed"
+				}`;
+				console.log(
+					`[CompleteDiscordQuest] Probed ${extracted.length} quest(s) from ${cachedQuestSource}`,
+				);
 				return extracted;
 			}
 		}
@@ -264,7 +275,9 @@ async function fetchQuests(): Promise<any[]> {
 	}
 
 	if (cachedQuests.length > 0) {
-		console.log(`[CompleteDiscordQuest] Got ${cachedQuests.length} quest(s) from ${cachedQuestSource}`);
+		console.log(
+			`[CompleteDiscordQuest] Got ${cachedQuests.length} quest(s) from ${cachedQuestSource}`,
+		);
 		return cachedQuests;
 	}
 
@@ -274,7 +287,9 @@ async function fetchQuests(): Promise<any[]> {
 	}
 
 	// Fallback: REST API (only returns enrolled quests)
-	console.log(`[CompleteDiscordQuest] No quest cache found, falling back to REST (${getQuestStoreDiagnostics()})`);
+	console.log(
+		`[CompleteDiscordQuest] No quest cache found, falling back to REST (${getQuestStoreDiagnostics()})`,
+	);
 	const resp = await getQuests();
 	return resp.quests ?? [];
 }
@@ -282,7 +297,9 @@ async function fetchQuests(): Promise<any[]> {
 // ---- Enrollment ----
 
 async function enrollPendingQuests(quests: any[]): Promise<any[]> {
-	const toEnroll = quests.filter((q) => !isQuestEnrolled(q) && !isQuestExpired(q) && !isQuestCompleted(q));
+	const toEnroll = quests.filter((q) =>
+		!isQuestEnrolled(q) && !isQuestExpired(q) && !isQuestCompleted(q)
+	);
 
 	if (toEnroll.length > 0) {
 		console.log(`[CompleteDiscordQuest] Attempting to enroll ${toEnroll.length} quest(s)`);
@@ -291,7 +308,11 @@ async function enrollPendingQuests(quests: any[]): Promise<any[]> {
 	for (const quest of toEnroll) {
 		const name = getQuestName(quest);
 		const task = getMainTask(quest);
-		console.log(`[CompleteDiscordQuest] Enrolling: ${name} (id=${quest.id}, type=${task?.type ?? "unknown"}, enrolledAt=${getEnrolledAt(quest) ?? "null"})`);
+		console.log(
+			`[CompleteDiscordQuest] Enrolling: ${name} (id=${quest.id}, type=${
+				task?.type ?? "unknown"
+			}, enrolledAt=${getEnrolledAt(quest) ?? "null"})`,
+		);
 		try {
 			await enrollQuest(quest.id);
 			markQuestEnrolledLocally(quest);
@@ -317,7 +338,13 @@ export async function startFarming(): Promise<void> {
 			const name = getQuestName(q);
 			const task = getMainTask(q);
 			const us = getQuestUserStatus(q);
-			console.log(`[CompleteDiscordQuest] Quest: ${name} | id=${q.id} | type=${task?.type ?? "none"} | enrolled=${!!getEnrolledAt(q)} | completed=${!!getCompletedAt(q)} | expired=${isQuestExpired(q)} | userStatus keys=${us ? Object.keys(us).join(",") : "null"}`);
+			console.log(
+				`[CompleteDiscordQuest] Quest: ${name} | id=${q.id} | type=${
+					task?.type ?? "none"
+				} | enrolled=${!!getEnrolledAt(q)} | completed=${!!getCompletedAt(q)} | expired=${
+					isQuestExpired(q)
+				} | userStatus keys=${us ? Object.keys(us).join(",") : "null"}`,
+			);
 		}
 
 		// Enroll quests that haven't been accepted yet
@@ -325,11 +352,15 @@ export async function startFarming(): Promise<void> {
 
 		// Only start tasks after the quest is marked enrolled locally or by Discord.
 		const eligible = quests.filter(
-			(q: any) => isQuestEnrolled(q) && !isQuestCompleted(q) && !isQuestExpired(q) && isQuestEligible(q) && !isTaskActive(q.id),
+			(q: any) =>
+				isQuestEnrolled(q) && !isQuestCompleted(q) && !isQuestExpired(q) && isQuestEligible(q)
+				&& !isTaskActive(q.id),
 		);
 
 		if (eligible.length === 0) {
-			console.log(`[CompleteDiscordQuest] No eligible quests to farm (${getQuestStoreDiagnostics()})`);
+			console.log(
+				`[CompleteDiscordQuest] No eligible quests to farm (${getQuestStoreDiagnostics()})`,
+			);
 			showToast("No eligible enrolled quests found");
 			return;
 		}
@@ -365,7 +396,9 @@ export function debugDumpQuests(): string {
 	const quests = fetchQuestsFromStore().length > 0 ? fetchQuestsFromStore() : cachedQuests;
 	if (quests.length === 0) {
 		return [
-			`Quests unavailable (type=${storeType}, raw keys=${raw ? Object.keys(raw).slice(0, 10).join(",") : "null"})`,
+			`Quests unavailable (type=${storeType}, raw keys=${
+				raw ? Object.keys(raw).slice(0, 10).join(",") : "null"
+			})`,
 			`store diagnostics: ${getQuestStoreDiagnostics()}`,
 			`module probe: ${cachedQuestProbeSummary}`,
 			`flux cache source: ${cachedQuestSource}`,
@@ -392,7 +425,13 @@ export function debugDumpQuests(): string {
 		const topKeys = Object.keys(q).join(",");
 		const cfgKeys = q?.config ? Object.keys(q.config).join(",") : "null";
 		const usKeys = getQuestUserStatus(q) ? Object.keys(getQuestUserStatus(q)).join(",") : "null";
-		lines.push(`${name}\n  id=${q.id}\n  type=${task?.type ?? "?"} target=${task?.target ?? "?"}\n  enrolled=${enrolled ?? "no"} completed=${completed ?? "no"} expired=${expired}\n  topKeys=[${topKeys}]\n  cfgKeys=[${cfgKeys}]\n  usKeys=[${usKeys}]`);
+		lines.push(
+			`${name}\n  id=${q.id}\n  type=${task?.type ?? "?"} target=${
+				task?.target ?? "?"
+			}\n  enrolled=${enrolled ?? "no"} completed=${
+				completed ?? "no"
+			} expired=${expired}\n  topKeys=[${topKeys}]\n  cfgKeys=[${cfgKeys}]\n  usKeys=[${usKeys}]`,
+		);
 	}
 	return lines.join("\n\n");
 }

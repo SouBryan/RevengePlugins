@@ -1,17 +1,12 @@
 import {
 	AuthError,
-	findStreamKey,
 	findStreamKeyForQuest,
 	getPublicApplication,
 	RateLimitError,
 	sendHeartbeat,
 	sendHeartbeatNative,
 } from "../api";
-import {
-	FluxDispatcher,
-	getApplicationStreamingStore,
-	getRunningGameStore,
-} from "../stores";
+import { FluxDispatcher, getApplicationStreamingStore, getRunningGameStore } from "../stores";
 import type { QuestTaskType } from "../types";
 import { updateTaskProgress } from "./index";
 
@@ -46,7 +41,11 @@ function getConfigVersion(quest: any): number {
 	return Number(prop(quest?.config, "configVersion", "config_version") ?? 2);
 }
 
-function getProgressFromStatus(status: any, taskType: QuestTaskType, configVersion: number): number {
+function getProgressFromStatus(
+	status: any,
+	taskType: QuestTaskType,
+	configVersion: number,
+): number {
 	if (!status) return 0;
 	const taskProgress = status?.progress?.[taskType];
 	if (taskProgress?.value != null) return Number(taskProgress.value);
@@ -56,7 +55,11 @@ function getProgressFromStatus(status: any, taskType: QuestTaskType, configVersi
 	return Number(prop(status, "streamProgressSeconds", "stream_progress_seconds") ?? 0);
 }
 
-function getHeartbeatEventProgress(event: any, taskType: QuestTaskType, configVersion: number): number {
+function getHeartbeatEventProgress(
+	event: any,
+	taskType: QuestTaskType,
+	configVersion: number,
+): number {
 	const status = prop(event, "userStatus", "user_status")
 		?? prop(event?.body, "userStatus", "user_status");
 	return getProgressFromStatus(status, taskType, configVersion);
@@ -214,7 +217,9 @@ function startDesktopPlayTask(
 	void (async () => {
 		try {
 			const appData = await getPublicApplication(applicationId);
-			const exeName = appData?.executables?.find?.((x: any) => x.os === "win32")?.name?.replace?.(">", "")
+			const exeName = appData?.executables?.find?.((x: any) =>
+				x.os === "win32"
+			)?.name?.replace?.(">", "")
 				?? applicationName.replace(/[\\/:*?"<>|]/g, "");
 			const fakeGame = {
 				cmdLine: `C:\\Program Files\\${applicationName}\\${exeName}`,
@@ -248,7 +253,9 @@ function startDesktopPlayTask(
 			fallbackTimer = setTimeout(async () => {
 				if (cancelled || currentProgress > 0) return;
 				const streamKey = await findStreamKeyForQuest(quest.id);
-				console.log(`[CompleteDiscordQuest] No internal heartbeat yet for ${applicationName}, trying REST fallback with ${streamKey}`);
+				console.log(
+					`[CompleteDiscordQuest] No internal heartbeat yet for ${applicationName}, trying REST fallback with ${streamKey}`,
+				);
 				manualCleanup = await startManualHeartbeatLoop(
 					quest,
 					"PLAY_ON_DESKTOP",
@@ -263,7 +270,10 @@ function startDesktopPlayTask(
 		} catch (e) {
 			const errMsg = e instanceof Error ? e.message : String(e);
 			updateTaskProgress(quest.id, currentProgress, "error", errMsg);
-			console.error(`[CompleteDiscordQuest] Failed to spoof PLAY_ON_DESKTOP for ${applicationName}:`, e);
+			console.error(
+				`[CompleteDiscordQuest] Failed to spoof PLAY_ON_DESKTOP for ${applicationName}:`,
+				e,
+			);
 		}
 	})();
 
@@ -287,12 +297,14 @@ function startDesktopStreamTask(
 
 	if (!streamingStore?.getStreamerActiveStreamMetadata) {
 		updateTaskProgress(quest.id, currentProgress, "error", "ApplicationStreamingStore unavailable");
-		console.error("[CompleteDiscordQuest] ApplicationStreamingStore unavailable for STREAM_ON_DESKTOP");
+		console.error(
+			"[CompleteDiscordQuest] ApplicationStreamingStore unavailable for STREAM_ON_DESKTOP",
+		);
 		return () => {};
 	}
 
-	const originalGetStreamerActiveStreamMetadata =
-		streamingStore.getStreamerActiveStreamMetadata.bind(streamingStore);
+	const originalGetStreamerActiveStreamMetadata = streamingStore.getStreamerActiveStreamMetadata
+		.bind(streamingStore);
 	const pid = Math.floor(Math.random() * 30000) + 1000;
 
 	const eventHandler = (event: any) => {

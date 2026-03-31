@@ -125,7 +125,9 @@ export async function enrollQuest(questId: string): Promise<any> {
 			console.log(`[CompleteDiscordQuest] Enrolled ${questId} via internal action`);
 			return result;
 		} catch (e: any) {
-			console.log(`[CompleteDiscordQuest] Internal enroll failed for ${questId}: ${e?.message ?? e}`);
+			console.log(
+				`[CompleteDiscordQuest] Internal enroll failed for ${questId}: ${e?.message ?? e}`,
+			);
 		}
 	}
 
@@ -140,7 +142,11 @@ export async function enrollQuest(questId: string): Promise<any> {
 		console.log(`[CompleteDiscordQuest] Enrolled ${questId} via RestAPI native`);
 		return resp.body;
 	} catch (e: any) {
-		console.log(`[CompleteDiscordQuest] Enroll strategy 1 (RestAPI native) failed for ${questId}: ${e?.status ?? e?.httpStatus} ${e?.body?.message ?? e?.message ?? ""}`);
+		console.log(
+			`[CompleteDiscordQuest] Enroll strategy 1 (RestAPI native) failed for ${questId}: ${
+				e?.status ?? e?.httpStatus
+			} ${e?.body?.message ?? e?.message ?? ""}`,
+		);
 	}
 
 	// Strategy 2: RestAPI with desktop spoof headers
@@ -155,7 +161,11 @@ export async function enrollQuest(questId: string): Promise<any> {
 		console.log(`[CompleteDiscordQuest] Enrolled ${questId} via RestAPI+spoof`);
 		return resp.body;
 	} catch (e: any) {
-		console.log(`[CompleteDiscordQuest] Enroll strategy 2 (RestAPI+spoof) failed for ${questId}: ${e?.status ?? e?.httpStatus} ${e?.body?.message ?? e?.message ?? ""}`);
+		console.log(
+			`[CompleteDiscordQuest] Enroll strategy 2 (RestAPI+spoof) failed for ${questId}: ${
+				e?.status ?? e?.httpStatus
+			} ${e?.body?.message ?? e?.message ?? ""}`,
+		);
 	}
 
 	// Strategy 3: fetch with full desktop headers
@@ -174,15 +184,23 @@ export async function enrollQuest(questId: string): Promise<any> {
 		});
 
 		let data: any = {};
-		try { data = await resp.json(); } catch {}
+		try {
+			data = await resp.json();
+		} catch {}
 
 		if (resp.ok) {
 			console.log(`[CompleteDiscordQuest] Enrolled ${questId} via fetch`);
 			return data;
 		}
-		console.log(`[CompleteDiscordQuest] Enroll strategy 3 (fetch) failed for ${questId}: HTTP ${resp.status} ${JSON.stringify(data)}`);
+		console.log(
+			`[CompleteDiscordQuest] Enroll strategy 3 (fetch) failed for ${questId}: HTTP ${resp.status} ${
+				JSON.stringify(data)
+			}`,
+		);
 	} catch (e: any) {
-		console.log(`[CompleteDiscordQuest] Enroll strategy 3 exception for ${questId}: ${e?.message ?? e}`);
+		console.log(
+			`[CompleteDiscordQuest] Enroll strategy 3 exception for ${questId}: ${e?.message ?? e}`,
+		);
 	}
 
 	// Strategy 4: Flux dispatch (trigger Discord's own enrollment handler)

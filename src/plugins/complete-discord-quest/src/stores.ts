@@ -136,7 +136,9 @@ export function getQuestStoreDiagnostics(): string {
 
 	if (questStore) {
 		const name = typeof questStore.getName === "function" ? questStore.getName() : "unknown";
-		return `resolved=${name} keys=${Object.keys(questStore).slice(0, 20).join(",")} candidates=${candidates.join(" | ") || "none"}`;
+		return `resolved=${name} keys=${Object.keys(questStore).slice(0, 20).join(",")} candidates=${
+			candidates.join(" | ") || "none"
+		}`;
 	}
 
 	return candidates.length > 0

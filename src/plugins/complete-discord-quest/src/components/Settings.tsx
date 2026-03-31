@@ -1,4 +1,4 @@
-import { React, clipboard } from "@vendetta/metro/common";
+import { clipboard, React } from "@vendetta/metro/common";
 import { useProxy } from "@vendetta/storage";
 import { Button, Forms, General } from "@vendetta/ui/components";
 import { showToast } from "@vendetta/ui/toasts";
