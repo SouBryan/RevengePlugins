@@ -21,10 +21,10 @@
 </a>
 </div>
 
-> [!IMPORTANT]  
+> [!IMPORTANT]\
 > My plugins assume you're using version atleast **250.10** (250210) from **September 28th, 2024**, they might not work properly if you use an older version than that.
 
-> [!CAUTION]  
+> [!CAUTION]\
 > If you have any plugins that are installed under the **dev.bunny.nexpid.xyz**, **bunny.nexpid.xyz** or **vendetta.nexpid.xyz** subdomain, make sure to reinstall them under the **revenge.nexpid.xyz** subdomain, as those subdomains are being sunsetted and will be removed in the future.
 
 ## 🌐 Localization
@@ -47,9 +47,7 @@
 
 ### ✅ Finished
 
-
 ### ❌ Broken
-
 
 ### ⏳ Unfinished
 
@@ -57,7 +55,6 @@
   - [<img alt="view_code" src="https://img.shields.io/badge/view_code-363a4f?style=for-the-badge" />](./plugins/complete-discord-quest/)
 
 ### 💀 Discontinued
-
 
 ## 📜 Licensing
 

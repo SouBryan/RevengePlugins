@@ -8,13 +8,7 @@ import {
 	getQuestsStore,
 	getQuestStoreDiagnostics,
 } from "./stores";
-import {
-	getMainTask,
-	isTaskActive,
-	startTask,
-	stopAllTasks,
-	teardownTaskRuntime,
-} from "./tasks";
+import { getMainTask, isTaskActive, startTask, stopAllTasks, teardownTaskRuntime } from "./tasks";
 import type { QuestTaskType } from "./types";
 
 let cachedQuests: any[] = [];

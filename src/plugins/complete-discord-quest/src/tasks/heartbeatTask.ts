@@ -80,10 +80,9 @@ function ensureDesktopStoreOverrides(): void {
 		const runningGameStore = getRunningGameStore();
 		if (runningGameStore && typeof runningGameStore.getRunningGames === "function") {
 			const originalGetRunningGames = runningGameStore.getRunningGames.bind(runningGameStore);
-			const originalGetGameForPID =
-				typeof runningGameStore.getGameForPID === "function"
-					? runningGameStore.getGameForPID.bind(runningGameStore)
-					: undefined;
+			const originalGetGameForPID = typeof runningGameStore.getGameForPID === "function"
+				? runningGameStore.getGameForPID.bind(runningGameStore)
+				: undefined;
 
 			runningGameStore.getRunningGames = () => {
 				const realGames = toArray<any>(originalGetRunningGames());
@@ -120,8 +119,8 @@ function ensureDesktopStoreOverrides(): void {
 			applicationStreamingStore
 			&& typeof applicationStreamingStore.getStreamerActiveStreamMetadata === "function"
 		) {
-			const originalGetStreamerActiveStreamMetadata =
-				applicationStreamingStore.getStreamerActiveStreamMetadata.bind(applicationStreamingStore);
+			const originalGetStreamerActiveStreamMetadata = applicationStreamingStore
+				.getStreamerActiveStreamMetadata.bind(applicationStreamingStore);
 
 			applicationStreamingStore.getStreamerActiveStreamMetadata = () => {
 				const fakeMetadata = Array.from(fakeApplications.values()).at(0);
@@ -142,10 +141,9 @@ function ensureDesktopStoreOverrides(): void {
 
 function dispatchRunningGamesChange(removed: any[], added: any[]): void {
 	const runningGameStore = getRunningGameStore();
-	const games =
-		typeof runningGameStore?.getRunningGames === "function"
-			? toArray<any>(runningGameStore.getRunningGames())
-			: Array.from(fakeGames.values());
+	const games = typeof runningGameStore?.getRunningGames === "function"
+		? toArray<any>(runningGameStore.getRunningGames())
+		: Array.from(fakeGames.values());
 
 	FluxDispatcher.dispatch({
 		type: "RUNNING_GAMES_CHANGE",
