@@ -1,5 +1,5 @@
 import type { ActiveTask, QuestTaskType } from "../types";
-import { startHeartbeatTask } from "./heartbeatTask";
+import { startHeartbeatTask, teardownDesktopTaskRuntime } from "./heartbeatTask";
 import { startVideoTask } from "./videoTask";
 
 const activeTasks = new Map<string, ActiveTask>();
@@ -99,6 +99,10 @@ export function stopAllTasks(): void {
 		task.cleanup();
 	}
 	activeTasks.clear();
+}
+
+export function teardownTaskRuntime(): void {
+	teardownDesktopTaskRuntime();
 }
 
 export function isTaskActive(questId: string): boolean {
